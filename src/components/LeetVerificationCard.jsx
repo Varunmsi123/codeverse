@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Copy, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function LeetCodeVerification({ onClose, verificationCode, userId }) {
-  const [leetcodeUsername, setLeetcodeUsername] = useState('');
+  const [leetcodeUsername, setLeetcodeUsername] = useState(userId?.email||"");
   const [isVerified, setIsVerified] = useState(false);
   const [verifiedUsername, setVerifiedUsername] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
 
-
+const navigate=useNavigate()
   // Check if user is already verified on component mount
   // useEffect(() => {
   //   checkVerificationStatus();
@@ -57,7 +58,12 @@ export default function LeetCodeVerification({ onClose, verificationCode, userId
   });
 
   const data = await res.json();
-  alert(data.msg);
+ console.log(data);
+ 
+  alert(data.message);
+   if(data?.message=="You are already verified on LeetCode!"){
+    onClose()
+  }
 };
 
   const styles = `

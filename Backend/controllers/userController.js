@@ -145,9 +145,9 @@ exports.leetVerification = async (req, res) => {
     }
 
     // Generate new verification code ONLY ONCE
-    const verificationCode = "LC-" + Math.random().toString(36).substring(2, 10);
+    const verificationCode = user.email.split("@")[0];
 
-    user.leetcodeVerificationCode = verificationCode;
+    user.leetcodeVerificationCode = verificationCode
     user.leetcodeVerified = false;
 
     await user.save();
@@ -171,19 +171,63 @@ exports.leetVerification = async (req, res) => {
 
 
 exports.confirmVerification = async (req, res) => {
-  const {userId,username} = req.body;
+  try {
+    const { userId, leetUsername: username } = req.body;
 
-  const summary = await fetchLeetCodeSummary(username);
+    if (!username) {
+      return res.status(400).json({ msg: "Username is required" });
+    }
 
-  if (!summary) {
-    return res.status(400).json({ msg: "LeetCode Summary not found" });
+    const user = await UserCodeverse.findById(userId);
+
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    const response = await fetch(
+      `https://leetcode-api-pied.vercel.app/user/${username}`
+    );
+
+    if (!response.ok) {
+      return res.status(400).json({ msg: "Failed to fetch LeetCode data" });
+    }
+
+    const data = await response.json();
+
+    const summary = data.profile?.aboutMe ?? "";
+
+    if (!summary) {
+      return res.status(400).json({ msg: "Summary not found on LeetCode profile" });
+    }
+
+    const emailPrefix = user.email.split("@")[0];
+
+    
+    const verificationCode = user.leetcodeVerificationCode;
+// console.log(emailPrefix.toLowerCase() );
+// console.log(summary.toLowerCase());
+
+
+   
+    if (emailPrefix.toLowerCase() === summary.toLowerCase() && summary.includes(verificationCode)) {
+
+      user.leetcodeVerified = true;
+      await user.save();
+
+      return res.json({ msg: "Verified!" });
+    }
+
+    return res.status(400).json({
+      msg: "Verification failed — code not found in LeetCode summary"
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ msg: "Server error" });
   }
-
-  if (!summary.includes(UserCodeverse.leetcodeVerificationCode)) {
-    return res.status(400).json({ msg: "Code not found in summary" });
-  }
-
-  res.json({ msg: "Verified!" });
-
-  
 };
+
+

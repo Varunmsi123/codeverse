@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Bell, Code } from 'lucide-react';
 import UserProfile from './UserProfile';
 import LeetCodeVerification from './LeetVerificationCard';
+import { useNavigate } from 'react-router-dom';
 
 
 export default function Home() {
@@ -17,7 +18,7 @@ export default function Home() {
   const [showProfileCard, setShowProfileCard] = useState(false);
   const [showLeetVerificationCard, setShowLeetVerificationCard] = useState(false);
   const [verificationCode, setVerificationCode] = useState(null);
-
+const navigate=useNavigate()
   // Sample data
   const myRooms = [
     { id: 1, name: 'Tech Wizards', members: 8, lastActive: '2 hours ago' },
@@ -148,6 +149,9 @@ const handleLeetCodeVerification = async() =>{
       setVerificationCode(data.code);
     } else {
       alert(data.message);
+       if(data?.message=="You are already verified on LeetCode!"){
+    window.location.reload();
+  }
     }
 
   }catch(err){
