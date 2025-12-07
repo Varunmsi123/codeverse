@@ -6,13 +6,13 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
   const [loading, setLoading] = useState(true);
   const [isFriend, setIsFriend] = useState(false);
   const [friendRequestSent, setFriendRequestSent] = useState(false);
+  const [formateddate, setFormateddate] = useState(null);
 
-  // Mock data - Replace with API call
   useEffect(() => {
-    
+
     setTimeout(() => {
       setUserProfile({
-        username: 'alex_coder',
+        username: "Alex_234",
         leetcodeUsername: 'alex_leetcode',
         problemsSolved: 487,
         challengesCompleted: 23,
@@ -26,26 +26,38 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
     }, 500);
   }, [userId]);
 
+
+  useEffect(() => {
+  if (ReceiverID && ReceiverID.createdAt) {
+    const createdAt = new Date(ReceiverID.createdAt);
+    const options = { year: "numeric", month: "long" };
+    const formattedDate = createdAt.toLocaleDateString("en-US", options);
+
+    setFormateddate(formattedDate);
+  }
+}, [ReceiverID]);
+
+
   const handleAddFriend = async () => {
     try {
       const token = localStorage.getItem(token);
       const UserID = localStorage.getItem(UserID);
-      const res = await fetch("http//:localhost:5000",{
+      const res = await fetch("http//:localhost:5000", {
         method: POST,
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(
           {
-             senderId: userId,
-             receiverId: ReceiverID,
+            senderId: userId,
+            receiverId: ReceiverID,
           }
         ),
       });
 
       const data = res.json();
-      console.log("Freind Request :",data);
-      
+      console.log("Freind Request :", data);
+
       setFriendRequestSent(true);
       setTimeout(() => {
         alert('Friend request sent!');
@@ -345,7 +357,7 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
       <div className="modal-overlay">
         <style>{overlayStyles + styles}</style>
         <div className="profile-card">
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#e0e0e0' }}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: '#e0e0e0',width: '100vw' }}>
             Loading...
           </div>
         </div>
@@ -356,28 +368,28 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
   return (
     <div className="modal-overlay" onClick={handleClose}>
       <style>{overlayStyles + styles}</style>
-      
+
       <div className="profile-card" onClick={(e) => e.stopPropagation()}>
         <button className="close-btn" onClick={handleClose}>
           <X size={20} />
         </button>
 
-        {/* Profile Header */}
+        
         <div className="profile-header">
           <div className="profile-avatar">
-            {userProfile.username[0].toUpperCase()}
+            {ReceiverID.username[0].toUpperCase()}
           </div>
-          <h1 className="profile-username">{userProfile.username}</h1>
-          <p className="profile-bio">{userProfile.bio}</p>
+          <h1 className="profile-username">{ReceiverID.username}</h1>
+          <p className="profile-bio">{ReceiverID.bio}</p>
           <div className="profile-meta">
             <span className="meta-item">
               <span>🏆</span> {userProfile.rank}
             </span>
             <span className="meta-item">
-              <span>📅</span> Joined {userProfile.joinedDate}
+              <span>📅</span> Joined {formateddate}
             </span>
           </div>
-          
+
           {/* Add Friend Button */}
           {isFriend ? (
             <button className="friend-status-btn">
@@ -408,7 +420,7 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
                 </div>
                 <div className="stat-label">Problems Solved</div>
               </div>
-              <div className="stat-value">{userProfile.problemsSolved}</div>
+              <div className="stat-value">{ReceiverID.totalProblemsSolved}</div>
             </div>
 
             <div className="stat-card">
@@ -418,7 +430,7 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
                 </div>
                 <div className="stat-label">Challenges</div>
               </div>
-              <div className="stat-value">{userProfile.challengesCompleted}</div>
+              <div className="stat-value">{ReceiverID.challengesReceived.length}</div>
             </div>
 
             <div className="stat-card">
@@ -428,7 +440,7 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
                 </div>
                 <div className="stat-label">Friends</div>
               </div>
-              <div className="stat-value">{userProfile.friendsCount}</div>
+              <div className="stat-value">{ReceiverID.friends.length}</div>
             </div>
 
             <div className="stat-card">
@@ -452,26 +464,26 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
             </h2>
             <div className="info-row">
               <span className="info-label">LeetCode Username</span>
-              <a 
-                href={`https://leetcode.com/${userProfile.leetcodeUsername}`} 
-                target="_blank" 
+              <a
+                href={`https://leetcode.com/${ReceiverID.leetcodeUsername}`}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="leetcode-link"
               >
-                @{userProfile.leetcodeUsername}
+                @{ReceiverID.leetcodeUsername}
               </a>
             </div>
             <div className="info-row">
               <span className="info-label">Total Problems</span>
-              <span className="info-value">{userProfile.problemsSolved}</span>
+              <span className="info-value">{ReceiverID.totalProblemsSolved}</span>
             </div>
             <div className="info-row">
               <span className="info-label">Challenges Won</span>
-              <span className="info-value">{userProfile.challengesCompleted}</span>
+              <span className="info-value">{ReceiverID.challengesReceived.length}</span>
             </div>
             <div className="info-row">
               <span className="info-label">Network</span>
-              <span className="info-value">{userProfile.friendsCount} Friends</span>
+              <span className="info-value">{ReceiverID.friends.length} Friends</span>
             </div>
           </div>
         </div>

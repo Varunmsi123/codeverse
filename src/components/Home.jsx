@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Bell, Code } from 'lucide-react';
 import UserProfile from './UserProfile';
+import LeetCodeVerification from './LeetVerificationCard';
 
 
 export default function Home() {
@@ -14,7 +15,8 @@ export default function Home() {
   const [realUsers, setRealUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showProfileCard, setShowProfileCard] = useState(false);
-
+  const [showLeetVerificationCard, setShowLeetVerificationCard] = useState(false);
+  const [verificationCode, setVerificationCode] = useState(null);
 
   // Sample data
   const myRooms = [
@@ -99,6 +101,68 @@ export default function Home() {
     }
   };
 
+ const fetchOtherUserProfile = async (userId) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`http://localhost:5000/users/${userId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+
+    console.log(data);
+
+    if (data.success) {
+      setSelectedUser(data.user);
+      setShowProfileCard(true);
+    }
+
+  } catch (error) {
+    console.log("Error fetching user:", error);
+  }
+};
+
+
+const handleLeetCodeVerification = async() =>{
+  try{
+    const token = localStorage.getItem("token");
+    const UserID = localStorage.getItem("userID");
+
+    const res = await fetch("http://localhost:5000/users/leetVerification",{
+      method : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ userId: UserID }),
+    });
+
+    const data = await res.json();
+    console.log(data);
+
+    if (data.success) {
+      setVerificationCode(data.code);
+    } else {
+      alert(data.message);
+    }
+
+  }catch(err){
+    console.log("Verification Error :",err);
+  }
+}
+
+const handleLeetVerification = () =>{
+  setSelectedUser(localStorage.getItem("userID"));
+  handleLeetCodeVerification();
+  setShowLeetVerificationCard(true);
+}
+
+
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.href = "/login";
@@ -111,6 +175,7 @@ export default function Home() {
 
   const handleSuggestionClick = (user) => {
     setSelectedUser(user);
+    fetchOtherUserProfile(user);
     setShowProfileCard(true);
   };
 
@@ -118,6 +183,12 @@ export default function Home() {
     setShowProfileCard(false);
     setSelectedUser(null);
     console.log(showProfileCard);
+  };
+
+  const closeLeetVerification = () => {
+    setShowLeetVerificationCard(false);
+    setSelectedUser(null);
+    // console.log(showProfileCard);
   };
 
   useEffect(() => {
@@ -611,9 +682,9 @@ export default function Home() {
               <div className="search-dropdown bg-secondary p-2 rounded">
                 {realUsers.map((u, idx) => (
                   <div
-                    key={idx}
+                    key={u._id}
                     className="user-result p-2 bg-dark text-light mb-1 rounded"
-                    onClick={handleSuggestionClick}
+                    onClick={() => handleSuggestionClick(u._id)}
                     style={{ cursor: "pointer" }}
                   >
                     {u.username}
@@ -622,7 +693,7 @@ export default function Home() {
               </div>
             )}
 
-            {showProfileCard && ( <UserProfile user={selectedUser} onClose ={closeProfile} />)}
+            {showProfileCard && ( <UserProfile user={selectedUser} onClose ={closeProfile} ReceiverID={selectedUser}/>)}
 
 
 
@@ -669,6 +740,17 @@ export default function Home() {
                     </svg>
                     View Profile
                   </button>
+
+                  <button className="dropdown-item" onClick={handleLeetVerification}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Verify Leetcode
+                  </button>
+
+                  {showLeetVerificationCard && ( <LeetCodeVerification onClose={closeLeetVerification} verificationCode={verificationCode} userId={selectedUser}/>)}
+
                   <button className="dropdown-item" onClick={handleLogout}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
