@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Bell, Code } from 'lucide-react';
 import UserProfile from './UserProfile';
 import LeetCodeVerification from './LeetVerificationCard';
+import Notifications from './Notifications';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -18,7 +19,8 @@ export default function Home() {
   const [showProfileCard, setShowProfileCard] = useState(false);
   const [showLeetVerificationCard, setShowLeetVerificationCard] = useState(false);
   const [verificationCode, setVerificationCode] = useState(null);
-const navigate=useNavigate()
+  // const [showNotifications,setShowNotifications] = useState(false);
+  const navigate = useNavigate()
   // Sample data
   const myRooms = [
     { id: 1, name: 'Tech Wizards', members: 8, lastActive: '2 hours ago' },
@@ -73,7 +75,7 @@ const navigate=useNavigate()
     setLoading(false);
   };
 
-  
+
   const searchUsers = async (query) => {
     try {
       if (!query.trim()) {
@@ -102,68 +104,68 @@ const navigate=useNavigate()
     }
   };
 
- const fetchOtherUserProfile = async (userId) => {
-  try {
-    const token = localStorage.getItem("token");
+  const fetchOtherUserProfile = async (userId) => {
+    try {
+      const token = localStorage.getItem("token");
 
-    const res = await fetch(`http://localhost:5000/users/${userId}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await fetch(`http://localhost:5000/users/profile/${userId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    console.log(data);
+      console.log(data);
 
-    if (data.success) {
-      setSelectedUser(data.user);
-      setShowProfileCard(true);
+      if (data.success) {
+        setSelectedUser(data.user);
+        setShowProfileCard(true);
+      }
+
+    } catch (error) {
+      console.log("Error fetching user:", error);
     }
-
-  } catch (error) {
-    console.log("Error fetching user:", error);
-  }
-};
+  };
 
 
-const handleLeetCodeVerification = async() =>{
-  try{
-    const token = localStorage.getItem("token");
-    const UserID = localStorage.getItem("userID");
+  const handleLeetCodeVerification = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const UserID = localStorage.getItem("userID");
 
-    const res = await fetch("http://localhost:5000/users/leetVerification",{
-      method : "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ userId: UserID }),
-    });
+      const res = await fetch("http://localhost:5000/users/leetVerification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: UserID }),
+      });
 
-    const data = await res.json();
-    console.log(data);
+      const data = await res.json();
+      console.log(data);
 
-    if (data.success) {
-      setVerificationCode(data.code);
-    } else {
-      alert(data.message);
-       if(data?.message=="You are already verified on LeetCode!"){
-    window.location.reload();
-  }
+      if (data.success) {
+        setVerificationCode(data.code);
+      } else {
+        alert(data.message);
+        if (data?.message == "You are already verified on LeetCode!") {
+          window.location.reload();
+        }
+      }
+
+    } catch (err) {
+      console.log("Verification Error :", err);
     }
-
-  }catch(err){
-    console.log("Verification Error :",err);
   }
-}
 
-const handleLeetVerification = () =>{
-  setSelectedUser(localStorage.getItem("userID"));
-  handleLeetCodeVerification();
-  setShowLeetVerificationCard(true);
-}
+  const handleLeetVerification = () => {
+    setSelectedUser(localStorage.getItem("userID"));
+    handleLeetCodeVerification();
+    setShowLeetVerificationCard(true);
+  }
 
 
 
@@ -189,6 +191,12 @@ const handleLeetVerification = () =>{
     console.log(showProfileCard);
   };
 
+  const closeNotifications = () => {
+    setShowNotifications(false);
+    // setSelectedUser(null);
+    console.log(showProfileCard);
+  };
+
   const closeLeetVerification = () => {
     setShowLeetVerificationCard(false);
     setSelectedUser(null);
@@ -197,7 +205,7 @@ const handleLeetVerification = () =>{
 
   useEffect(() => {
     fetchProfile();
-    
+
   }, []);
 
   if (loading) {
@@ -697,7 +705,7 @@ const handleLeetVerification = () =>{
               </div>
             )}
 
-            {showProfileCard && ( <UserProfile user={selectedUser} onClose ={closeProfile} ReceiverID={selectedUser}/>)}
+            {showProfileCard && (<UserProfile user={selectedUser} onClose={closeProfile} ReceiverID={selectedUser} />)}
 
 
 
@@ -715,14 +723,7 @@ const handleLeetVerification = () =>{
             </button>
 
             {showNotifications && (
-              <div className="notification-dropdown">
-                <h6 style={{ color: '#ffffff', marginBottom: '0.75rem', fontSize: '0.95rem' }}>Notifications</h6>
-                {dummyNotifications.map((note, idx) => (
-                  <div key={idx} className="notification-item">
-                    {note}
-                  </div>
-                ))}
-              </div>
+              <Notifications onClose={closeNotifications} />
             )}
           </div>
 
@@ -753,7 +754,7 @@ const handleLeetVerification = () =>{
                     Verify Leetcode
                   </button>
 
-                  {showLeetVerificationCard && ( <LeetCodeVerification onClose={closeLeetVerification} verificationCode={verificationCode} userId={selectedUser}/>)}
+                  {showLeetVerificationCard && (<LeetCodeVerification onClose={closeLeetVerification} verificationCode={verificationCode} userId={selectedUser} />)}
 
                   <button className="dropdown-item" onClick={handleLogout}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -787,12 +788,18 @@ const handleLeetVerification = () =>{
 
         {/* Action Cards */}
         <div className="cards-grid">
-          <div className="action-card">
+          <div
+            className="action-card"
+            onClick={() => navigate("/challenge")}
+            style={{ cursor: "pointer" }}
+          >
             <div className="card-icon-wrapper">
-              <span style={{ fontSize: '2rem' }}>🎯</span>
+              <span style={{ fontSize: "2rem" }}>🎯</span>
             </div>
             <h5 className="card-title">Start a Challenge</h5>
-            <p className="card-text">Begin a new challenge and compete with others</p>
+            <p className="card-text">
+              Begin a new challenge and compete with others
+            </p>
           </div>
 
           <div className="action-card">

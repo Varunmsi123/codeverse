@@ -1,4 +1,6 @@
 const UserCodeverse = require("../models/User");
+const friendRequests = require("../models/Freindrequest");
+const Notification = require("../models/Notifications");
 const { fetchLeetCodeSummary } = require("../utils/leetcode");
 
 exports.searchByUsername = async (req, res) => {
@@ -28,7 +30,8 @@ exports.getProfile = async (req, res) => {
     const userId = req.params.id;   
 
     const user = await UserCodeverse.findById(userId)
-      .select("-password");         
+      .select("-password");
+               
 
     if (!user) {
       return res.status(404).json({
@@ -52,67 +55,86 @@ exports.getProfile = async (req, res) => {
 };
 
 
-// exports.sendFriendRequest = async (req, res) => {
-//   const { UserID, receiverID } = req.body;
+exports.sendFriendRequest = async (req, res) => {
+  const { UserID, receiverID } = req.body;
 
-//   try {
-//     if (!UserID || !receiverID) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "UserID and receiverID are required",
-//       });
-//     }
+  try {
+    if (!UserID || !receiverID) {
+      return res.status(400).json({
+        success: false,
+        message: "UserID and receiverID are required",
+      });
+    }
 
-//     if (UserID === receiverID) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "You cannot send a friend request to yourself",
-//       });
-//     }
+    if (UserID === receiverID) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot send a friend request to yourself",
+      });
+    }
 
-//     const receiver = await UserCodeverse.findById(receiverID);
-//     const sender = await UserCodeverse.findById(UserID);
+    const receiver = await UserCodeverse.findById(receiverID);
+    const sender = await UserCodeverse.findById(UserID);
 
-//     if (!receiver || !sender) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "User not found",
-//       });
-//     }
+    if (!receiver || !sender) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
-//     // Check if already friends
-//     if (receiver.friends.includes(UserID)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Already friends",
-//       });
-//     }
+    // 🔍 CHECK IF REQUEST ALREADY EXISTS
+    const alreadySent = await friendRequests.findOne({
+      sender: UserID,
+      receiver: receiverID,
+      status: "pending"
+    });
 
-//     // Check if request already sent
-//     if (receiver.friendRequests.includes(UserID)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Friend request already sent",
-//       });
-//     }
+    if (alreadySent) {
+      return res.status(400).json({
+        success: false,
+        message: "Friend request already sent",
+      });
+    }
 
-//     // Add the request
-//     receiver.friendRequests.push(UserID);
-//     await receiver.save();
+    // 🔍 CHECK IF THEY ARE ALREADY FRIENDS
+    if (receiver.friends.includes(UserID)) {
+      return res.status(400).json({
+        success: false,
+        message: "Already friends",
+      });
+    }
 
-//     return res.status(200).json({
-//       success: true,
-//       message: "Friend request sent successfully",
-//     });
+    // 📌 CREATE FRIEND REQUEST ENTRY
+    const newRequest = await friendRequests.create({
+      sender: UserID,
+      receiver: receiverID,
+    });
 
-//   } catch (err) {
-//     console.log("Error :", err);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Something went wrong",
-//     });
-//   }
-// };
+    // 📌 CREATE NOTIFICATION ENTRY
+    await Notification.create({
+      userId: receiverID,
+      senderId: UserID,
+      type: "friend-request",
+      message: `${sender.username} sent you a friend request`,
+      isRead: false,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Friend request sent successfully",
+      request: newRequest,
+    });
+
+  } catch (err) {
+    console.log("Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
 
 exports.leetVerification = async (req, res) => {
   const { userId } = req.body;
@@ -168,8 +190,6 @@ exports.leetVerification = async (req, res) => {
 };
 
 
-
-
 exports.confirmVerification = async (req, res) => {
   try {
     const { userId, leetUsername: username } = req.body;
@@ -204,17 +224,17 @@ exports.confirmVerification = async (req, res) => {
     }
 
     const emailPrefix = user.email.split("@")[0];
-
-    
     const verificationCode = user.leetcodeVerificationCode;
-// console.log(emailPrefix.toLowerCase() );
-// console.log(summary.toLowerCase());
 
-
-   
-    if (emailPrefix.toLowerCase() === summary.toLowerCase() && summary.includes(verificationCode)) {
-
+    if (
+      emailPrefix.toLowerCase() === summary.toLowerCase() &&
+      summary.includes(verificationCode)
+    ) {
       user.leetcodeVerified = true;
+
+      // ✅ Set the verified LeetCode username
+      user.leetcodeUsername = username;
+
       await user.save();
 
       return res.json({ msg: "Verified!" });
@@ -229,5 +249,30 @@ exports.confirmVerification = async (req, res) => {
     return res.status(500).json({ msg: "Server error" });
   }
 };
+
+
+
+exports.getNotifications = async (req, res) => {
+  try {
+    const userId = req.user; // ✅ from auth middleware
+    
+    const notifications = await Notification.find({ userId , isRead:false})
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      notifications,
+    });
+  } catch (err) {
+    console.log("Error fetching notifications:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching notifications",
+    });
+  }
+};
+
+
+
 
 

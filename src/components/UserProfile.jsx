@@ -3,67 +3,97 @@ import { X, Users, Award, CheckCircle, Code, UserPlus, UserCheck } from 'lucide-
 
 export default function UserProfile({ userId, onClose, ReceiverID }) {
   const [userProfile, setUserProfile] = useState(null);
+  const [userProfile1, setUserProfile1] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFriend, setIsFriend] = useState(false);
   const [friendRequestSent, setFriendRequestSent] = useState(false);
   const [formateddate, setFormateddate] = useState(null);
 
-  useEffect(() => {
-
-    setTimeout(() => {
-      setUserProfile({
-        username: "Alex_234",
-        leetcodeUsername: 'alex_leetcode',
-        problemsSolved: 487,
-        challengesCompleted: 23,
-        friendsCount: 156,
-        profilePic: null,
-        bio: 'Passionate about algorithms and competitive programming',
-        rank: 'Guardian',
-        joinedDate: 'January 2023'
-      });
-      setLoading(false);
-    }, 500);
-  }, [userId]);
-
 
   useEffect(() => {
-  if (ReceiverID && ReceiverID.createdAt) {
-    const createdAt = new Date(ReceiverID.createdAt);
-    const options = { year: "numeric", month: "long" };
-    const formattedDate = createdAt.toLocaleDateString("en-US", options);
+    const fetchReceiverProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const id = ReceiverID?._id || ReceiverID;
 
-    setFormateddate(formattedDate);
-  }
-}, [ReceiverID]);
+        const res = await fetch(`http://localhost:5000/users/profile/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          console.log("HTTP Error:", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        setUserProfile1(data);
+        console.log("userProfile1 : ", data);
+        // console.log("userprofile me 1",userProfile);
+        setLoading(false);
+      } catch (err) {
+        console.log("Error fetching user:", err);
+      }
+    };
+
+    if (ReceiverID) fetchReceiverProfile();
+  }, [ReceiverID]);
+
+  useEffect(() => {
+  if (!userProfile1?.user) return;
+
+  const user = userProfile1.user;
+  console.log("Ye dekh betaa",user);
+
+  setUserProfile({
+    username: user.username,
+    leetcodeUsername: user.leetcodeUsername,
+    problemsSolved: user.totalProblemsSolved ?? 10,
+    challengesCompleted: user.challengesReceived?.length ?? 0,
+    friendsCount: user.friends?.length ?? 0,
+    bio: user.bio || 'Passionate about algorithms and competitive programming',
+    createdAt: user.createdAt
+  });
+
+}, [userProfile1]);
+
+  useEffect(() => {
+    if (userProfile?.createdAt) {
+      const createdAt = new Date(userProfile.createdAt);
+      const options = { year: "numeric", month: "long" };
+      const formattedDate = createdAt.toLocaleDateString("en-US", options);
+      setFormateddate(formattedDate);
+    }
+  }, [userProfile]);
 
 
   const handleAddFriend = async () => {
     try {
-      const token = localStorage.getItem(token);
-      const UserID = localStorage.getItem(UserID);
-      const res = await fetch("http//:localhost:5000", {
-        method: POST,
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userID");
+      console.log(userId);
+      console.log(ReceiverID);
+
+      const res = await fetch("http://localhost:5000/users/request", {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(
-          {
-            senderId: userId,
-            receiverId: ReceiverID,
-          }
-        ),
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+        body: JSON.stringify({
+           UserID:userId,
+           receiverID:ReceiverID._id,
+        }),
       });
 
-      const data = res.json();
-      console.log("Freind Request :", data);
+      const data = await res.json();
+      console.log("Friend Request:", data);
 
       setFriendRequestSent(true);
-      setTimeout(() => {
-        alert('Friend request sent!');
-      }, 100);
+      setTimeout(() => alert("Friend request sent!"), 150);
     } catch (error) {
-      console.error('Error adding friend:', error);
+      console.error("Error adding friend:", error);
     }
   };
 
@@ -357,7 +387,7 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
       <div className="modal-overlay">
         <style>{overlayStyles + styles}</style>
         <div className="profile-card">
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#e0e0e0',width: '100vw' }}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: '#e0e0e0', width: '100vw' }}>
             Loading...
           </div>
         </div>
@@ -374,117 +404,109 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
           <X size={20} />
         </button>
 
-        
+        {/* ------------------ HEADER ------------------ */}
         <div className="profile-header">
           <div className="profile-avatar">
-            {ReceiverID.username[0].toUpperCase()}
-          </div>
-          <h1 className="profile-username">{ReceiverID.username}</h1>
-          <p className="profile-bio">{ReceiverID.bio}</p>
-          <div className="profile-meta">
-            <span className="meta-item">
-              <span>🏆</span> {userProfile.rank}
-            </span>
-            <span className="meta-item">
-              <span>📅</span> Joined {formateddate}
-            </span>
+            {userProfile?.username?.[0]?.toUpperCase() || "U"}
           </div>
 
-          {/* Add Friend Button */}
+          <h1 className="profile-username">{userProfile?.username || "A"}</h1>
+          <p className="profile-bio">{userProfile?.bio}</p>
+
+          <div className="profile-meta">
+            <span className="meta-item">📅 Joined {formateddate}</span>
+          </div>
+
           {isFriend ? (
             <button className="friend-status-btn">
-              <UserCheck size={18} />
-              Friends
+              <UserCheck size={18} /> Friends
             </button>
           ) : friendRequestSent ? (
             <button className="add-friend-btn" disabled>
-              <UserCheck size={18} />
-              Request Sent
+              <UserCheck size={18} /> Request Sent
             </button>
           ) : (
             <button className="add-friend-btn" onClick={handleAddFriend}>
-              <UserPlus size={18} />
-              Add Friend
+              <UserPlus size={18} /> Add Friend
             </button>
           )}
         </div>
 
-        {/* Profile Content */}
+        {/* ------------------ CONTENT ------------------ */}
         <div className="profile-content">
-          {/* Stats Grid */}
           <div className="stats-grid">
+
             <div className="stat-card">
               <div className="stat-header">
-                <div className="stat-icon stat-icon-blue">
-                  <Code size={22} />
-                </div>
+                <div className="stat-icon stat-icon-blue"><Code size={22} /></div>
                 <div className="stat-label">Problems Solved</div>
               </div>
-              <div className="stat-value">{ReceiverID.totalProblemsSolved}</div>
+              <div className="stat-value">
+                {userProfile?.problemsSolved || 10}
+              </div>
             </div>
 
             <div className="stat-card">
               <div className="stat-header">
-                <div className="stat-icon stat-icon-green">
-                  <CheckCircle size={22} />
-                </div>
+                <div className="stat-icon stat-icon-green"><CheckCircle size={22} /></div>
                 <div className="stat-label">Challenges</div>
               </div>
-              <div className="stat-value">{ReceiverID.challengesReceived.length}</div>
+              <div className="stat-value">
+                {userProfile?.challengesReceived?.length || 0}
+              </div>
             </div>
 
             <div className="stat-card">
               <div className="stat-header">
-                <div className="stat-icon stat-icon-purple">
-                  <Users size={22} />
-                </div>
+                <div className="stat-icon stat-icon-purple"><Users size={22} /></div>
                 <div className="stat-label">Friends</div>
               </div>
-              <div className="stat-value">{ReceiverID.friends.length}</div>
+              <div className="stat-value">
+                {userProfile?.friends?.length || 0}
+              </div>
             </div>
 
             <div className="stat-card">
               <div className="stat-header">
-                <div className="stat-icon stat-icon-orange">
-                  <Award size={22} />
-                </div>
+                <div className="stat-icon stat-icon-orange"><Award size={22} /></div>
                 <div className="stat-label">Success Rate</div>
               </div>
               <div className="stat-value">
-                {Math.round((userProfile.challengesCompleted / userProfile.problemsSolved) * 100)}%
+                {userProfile?.problemsSolved || 100
+                  ? Math.round(
+                    (userProfile?.challengesCompleted || 50 /
+                      userProfile?.problemsSolved || 100) *
+                    100
+                  )
+                  : 0}
+                %
               </div>
             </div>
           </div>
 
-          {/* Additional Info */}
           <div className="info-section">
-            <h2 className="section-title">
-              <Code size={20} />
-              Coding Profile
-            </h2>
+            <h2 className="section-title"><Code size={20} /> Coding Profile</h2>
+
             <div className="info-row">
               <span className="info-label">LeetCode Username</span>
-              <a
-                href={`https://leetcode.com/${ReceiverID.leetcodeUsername}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="leetcode-link"
-              >
-                @{ReceiverID.leetcodeUsername}
-              </a>
+              <span className="info-value">
+                <a
+                  href={`https://leetcode.com/${userProfile?.leetcodeUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="leetcode-link"
+                >
+                  @{userProfile?.leetcodeUsername || "-"}
+                </a>
+              </span>
             </div>
+
+
             <div className="info-row">
               <span className="info-label">Total Problems</span>
-              <span className="info-value">{ReceiverID.totalProblemsSolved}</span>
+              <span className="info-value">{userProfile?.problemsSolved || 100}</span>
             </div>
-            <div className="info-row">
-              <span className="info-label">Challenges Won</span>
-              <span className="info-value">{ReceiverID.challengesReceived.length}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">Network</span>
-              <span className="info-value">{ReceiverID.friends.length} Friends</span>
-            </div>
+
           </div>
         </div>
       </div>

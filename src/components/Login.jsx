@@ -30,11 +30,8 @@ const Login = () => {
         return;
       }
 
-      // console.log(data.user._id);
-
-      
       localStorage.setItem("token", data.token);
-      localStorage.setItem("userID",data.user._id);
+      localStorage.setItem("userID", data.user._id);
 
       alert("Login successful!");
 
@@ -60,8 +57,6 @@ const Login = () => {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-15px); }
         }
-
-
 
         @keyframes slideIn {
           from {
@@ -91,8 +86,6 @@ const Login = () => {
           }
         }
 
-
-
         @keyframes pulse {
           0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
@@ -109,16 +102,28 @@ const Login = () => {
           }
         }
 
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body, html {
+          margin: 0;
+          padding: 0;
+          overflow-x: hidden;
+        }
+
         .auth-bg {
           background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2d2d2d 100%);
           position: relative;
           overflow: hidden;
           min-height: 100vh;
-          min-width:100vw;
+          width: 100vw;
           display: flex;
           justify-content: center;
           align-items: center;
-          padding: 0;
+          padding: 1rem;
         }
 
         .particle {
@@ -130,10 +135,11 @@ const Login = () => {
           backdrop-filter: blur(10px);
           border: 2px solid #4a5568 !important;
           border-radius: 20px !important;
-          max-width: 100%;
-          width: 25%;
+          width: 100%;
+          max-width: 450px;
           position: relative;
           box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+          animation: slideIn 0.5s ease-out;
         }
 
         .auth-card::before {
@@ -145,6 +151,7 @@ const Login = () => {
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
+          font-size: 1.75rem;
         }
 
         .auth-card h3 span {
@@ -157,6 +164,7 @@ const Login = () => {
           letter-spacing: 0.5px;
           text-transform: uppercase;
           font-size: 14px;
+          margin-bottom: 0.5rem;
         }
 
         .form-control {
@@ -167,6 +175,7 @@ const Login = () => {
           padding: 14px 18px;
           transition: all 0.3s ease;
           box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+          font-size: 16px;
         }
 
         .form-control:focus {
@@ -174,6 +183,7 @@ const Login = () => {
           border-color: #718096 !important;
           box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3) !important;
           color: #ffffff !important;
+          outline: none !important;
         }
 
         .auth-btn {
@@ -187,6 +197,7 @@ const Login = () => {
           transition: all 0.3s ease;
           text-transform: uppercase;
           letter-spacing: 1px;
+          width: 100%;
         }
 
         .auth-btn:hover {
@@ -200,6 +211,7 @@ const Login = () => {
 
         .auth-card p {
           color: #ffffff;
+          margin-bottom: 0;
         }
 
         .auth-card a {
@@ -211,6 +223,107 @@ const Login = () => {
 
         .auth-card a:hover {
           color: #cbd5e0;
+        }
+
+        /* Tablet styles */
+        @media (max-width: 768px) {
+          .auth-card {
+            max-width: 500px;
+            padding: 2rem !important;
+          }
+
+          .auth-card h3 {
+            font-size: 1.5rem;
+          }
+
+          .form-control {
+            padding: 12px 16px;
+            font-size: 15px;
+          }
+
+          .auth-btn {
+            padding: 14px;
+            font-size: 16px;
+          }
+
+          .form-label {
+            font-size: 13px;
+          }
+        }
+
+        /* Mobile styles */
+        @media (max-width: 480px) {
+          .auth-bg {
+            padding: 1rem 0.75rem;
+          }
+
+          .auth-card {
+            max-width: 100%;
+            padding: 1.5rem !important;
+            border-radius: 15px !important;
+          }
+
+          .auth-card h3 {
+            font-size: 1.35rem;
+            margin-bottom: 1.5rem !important;
+          }
+
+          .form-control {
+            padding: 12px 14px;
+            font-size: 14px;
+            border-radius: 8px !important;
+          }
+
+          .auth-btn {
+            padding: 12px;
+            font-size: 15px;
+            border-radius: 8px !important;
+          }
+
+          .form-label {
+            font-size: 12px;
+          }
+
+          .mb-3 {
+            margin-bottom: 1rem !important;
+          }
+
+          .mt-2 {
+            margin-top: 1rem !important;
+          }
+
+          .mt-3 {
+            margin-top: 1.25rem !important;
+          }
+
+          .auth-card p {
+            font-size: 14px;
+          }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 360px) {
+          .auth-bg {
+            padding: 0.5rem;
+          }
+
+          .auth-card {
+            padding: 1.25rem !important;
+          }
+
+          .auth-card h3 {
+            font-size: 1.2rem;
+          }
+
+          .form-control {
+            padding: 10px 12px;
+            font-size: 13px;
+          }
+
+          .auth-btn {
+            padding: 10px;
+            font-size: 14px;
+          }
         }
       `}</style>
 
@@ -227,7 +340,7 @@ const Login = () => {
           />
         ))}
 
-        <div className="card shadow-lg p-4 auth-card" style={{ margin: '0 auto' }}>
+        <div className="card shadow-lg p-4 auth-card">
           <h3 className="text-center mb-3 fw-bold">Welcome Back <span>👋</span></h3>
 
           <div onSubmit={handleSubmit}>
@@ -237,6 +350,7 @@ const Login = () => {
                 type="email"
                 className="form-control"
                 required
+                value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
@@ -247,6 +361,7 @@ const Login = () => {
                 type="password"
                 className="form-control"
                 required
+                value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>

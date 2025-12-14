@@ -7,10 +7,8 @@ app.use(express.json());
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
-
-
-console.log('HII')
-
+const freindsRoutes = require("./routes/freindsRoutes");
+const challengeRoutes = require("./routes/challengeRoutes");
 
 app.use(cors({
   origin: "http://localhost:5173", 
@@ -18,7 +16,6 @@ app.use(cors({
 }));
 
 
-// Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected successfully");
@@ -30,7 +27,7 @@ mongoose.connect(process.env.MONGO_URI)
   })
   .catch((err) => console.log("Database Error:", err));
 
-  console.log('Hello')
-
 app.use("/auth", authRoutes); 
 app.use("/users",userRoutes);
+app.use("/friends",freindsRoutes);
+app.use("/challenge",challengeRoutes);

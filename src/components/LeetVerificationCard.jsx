@@ -60,7 +60,7 @@ const navigate=useNavigate()
   const data = await res.json();
  console.log(data);
  
-  alert(data.message);
+  alert(data.msg);
    if(data?.message=="You are already verified on LeetCode!"){
     onClose()
   }
