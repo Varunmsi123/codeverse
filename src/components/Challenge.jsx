@@ -6,10 +6,10 @@ export default function ChallengePage() {
   const [leetcodeProblems, setLeetcodeProblems] = useState([]);
   const [sentChallenges, setSentChallenges] = useState([]);
   const [receivedChallenges, setReceivedChallenges] = useState([]);
-  const [selectedFriend, setSelectedFriend] = useState(null);
+  const [selectedFriend, setSelectedFriend] = useState([]);
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('create'); // 'create', 'sent', 'received'
+  const [activeTab, setActiveTab] = useState('create');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,9 +36,10 @@ export default function ChallengePage() {
       });
       const problemsData = await problemsRes.json();
       console.log(problemsData);
-      if (problemsData.success) setLeetcodeProblems(problemsData.problems);
+      if (problemsData.success) setLeetcodeProblems(problemsData.data);
+      console.log("Ye dekho beta :",leetcodeProblems);
 
-      // Fetch sent challenges
+      
       const sentRes = await fetch("http://localhost:5000/challenges/sent", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
@@ -46,7 +47,7 @@ export default function ChallengePage() {
       const sentData = await sentRes.json();
       if (sentData.success) setSentChallenges(sentData.challenges);
 
-      // Fetch received challenges
+     
       const receivedRes = await fetch("http://localhost:5000/challenges/received", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
@@ -60,16 +61,6 @@ export default function ChallengePage() {
       setLoading(false);
     }
   };
-
-
-//   const sampleProblems = [
-//     { id: 1, title: 'Two Sum', difficulty: 'Easy', problemNumber: 1 },
-//     { id: 2, title: 'Add Two Numbers', difficulty: 'Medium', problemNumber: 2 },
-//     { id: 3, title: 'Longest Substring Without Repeating', difficulty: 'Medium', problemNumber: 3 },
-//     { id: 4, title: 'Median of Two Sorted Arrays', difficulty: 'Hard', problemNumber: 4 },
-//     { id: 5, title: 'Longest Palindromic Substring', difficulty: 'Medium', problemNumber: 5 },
-//     { id: 6, title: 'Reverse Integer', difficulty: 'Easy', problemNumber: 7 },
-//   ];
 
   const sampleSentChallenges = [
     { id: 1, to: 'sarah_dev', problem: 'Two Sum', difficulty: 'Easy', status: 'pending', sentAt: '2 hours ago' },
@@ -98,15 +89,19 @@ export default function ChallengePage() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/challenges/send", {
+      console.log(selectedProblem);
+      console.log(selectedFriend);
+      const response = await fetch("http://localhost:5000/challenge/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          friendId: selectedFriend.id,
+          friendId: selectedFriend._id,
           problemId: selectedProblem.id,
+          title: selectedProblem.title,
+          difficulty:selectedProblem.difficulty,
         }),
       });
 
@@ -558,18 +553,18 @@ export default function ChallengePage() {
                   />
                 </div>
                 <div className="list">
-                  {displayProblems.map(problem => (
+                  {filteredProblems.map(problem => (
                     <div 
-                      key={displayProblems.id}
+                      key={problem.id}
                       className={`list-item problem-item ${selectedProblem?.id === problem.id ? 'selected' : ''}`}
                       onClick={() => setSelectedProblem(problem)}
                     >
                       <div className="problem-info">
-                        <div className="problem-number">#{displayProblems.id}</div>
-                        <div className="problem-title">{displayProblems.title}</div>
+                        <div className="problem-number">#{problem.id}</div>
+                        <div className="problem-title">{problem.title}</div>
                       </div>
                       <span className={`badge badge-${problem.difficulty.toLowerCase()}`}>
-                        {displayProblems.difficulty}
+                        {problem.difficulty}
                       </span>
                     </div>
                   ))}

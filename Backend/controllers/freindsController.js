@@ -10,7 +10,7 @@ exports.respondFriendRequest = async (req, res) => {
     console.log(senderId);
     console.log(action);
     console.log(receiverId);
-    // 1️⃣ Validation
+  
     if (!notificationId || !senderId || !action) {
       return res.json({
         success: false,
@@ -32,10 +32,10 @@ exports.respondFriendRequest = async (req, res) => {
       });
     }
 
-    // 2️⃣ Find friend request
+    
     const friendRequest = await friendRequests.findOne({
-      sender:senderId,
-      receiver:receiverId,
+      sender: senderId,
+      receiver: receiverId,
     });
 
     if (!friendRequest) {
@@ -45,12 +45,12 @@ exports.respondFriendRequest = async (req, res) => {
       });
     }
 
-    // 3️⃣ ACCEPT
+    
     if (action === "accept") {
       friendRequest.status = "accepted";
       await friendRequest.save();
 
-      // Add friends (both sides)
+      
       await UserCodeverse.findByIdAndUpdate(senderId, {
         $addToSet: { friends: receiverId },
       });
@@ -59,23 +59,24 @@ exports.respondFriendRequest = async (req, res) => {
         $addToSet: { friends: senderId },
       });
 
-      const x = UserCodeverse.findById(senderId);
-      // Notify sender
+      const x = await UserCodeverse.findById(receiverId).select("username");
+       console.log(x.username);
       await Notification.create({
-        userId: senderId,
-        senderId: receiverId,
+        userId: senderId,          
+        senderId: receiverId,     
         type: "friend-accepted",
-        message: `${x} accepted your friend request`,
+        message: `${x.username} accepted your friend request`,
       });
+
     }
 
-    // 4️⃣ REJECT
+    
     if (action === "reject") {
       friendRequest.status = "rejected";
       await friendRequest.save();
     }
 
-    
+
     await Notification.findByIdAndUpdate(notificationId, {
       isRead: true,
     });

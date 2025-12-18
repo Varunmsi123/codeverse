@@ -12,7 +12,7 @@ exports.searchByUsername = async (req, res) => {
     }
 
     const users = await UserCodeverse.find({
-      username: { $regex: query, $options: "i" } 
+      username: { $regex: query, $options: "i" }
     }).select("_id username");
 
     console.log(users);
@@ -27,11 +27,11 @@ exports.searchByUsername = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const userId = req.params.id;   
+    const userId = req.params.id;
 
     const user = await UserCodeverse.findById(userId)
       .select("-password");
-               
+
 
     if (!user) {
       return res.status(404).json({
@@ -254,9 +254,11 @@ exports.confirmVerification = async (req, res) => {
 
 exports.getNotifications = async (req, res) => {
   try {
-    const userId = req.user; // ✅ from auth middleware
-    
-    const notifications = await Notification.find({ userId , isRead:false})
+    const userId = req.user;
+
+    const notifications = await Notification.find({ userId, isRead: false })
+      .populate("senderId", "username")
+      .populate("challengeId", "title difficulty status")
       .sort({ createdAt: -1 });
 
     return res.json({

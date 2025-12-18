@@ -65,7 +65,7 @@ export default function Notifications({ onClose }) {
   const handleChallengeResponse = async (notificationId, challengeId, action) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/challenges/respond", {
+      const response = await fetch("http://localhost:5000/challenge/respond", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,7 +74,7 @@ export default function Notifications({ onClose }) {
         body: JSON.stringify({
           notificationId,
           challengeId,
-          action, // 'accept' or 'reject'
+          action,
         }),
       });
 
@@ -434,32 +434,69 @@ export default function Notifications({ onClose }) {
         );
 
       case 'challenge':
+        const challenge = notifications?.challengeId;
+        console.log("challengeId:", notifications?.challengeId);
+        console.log("type:", typeof notifications?.challengeId);
+        console.log("ye notification",challenge._id);
         return (
           <div key={notifications._id} className="notification-item">
             <div className="notification-header">
               <div className="notification-avatar avatar-challenge">
-                {notifications?.message?.[0].toUpperCase()}
+                {
+                  notifications?.message
+                    ?.trim()
+                    ?.split(" ")
+                    ?.pop()
+                    ?.charAt(0)
+                    ?.toUpperCase() || "U"
+                }
               </div>
+
               <div className="notification-content">
                 <div className="notification-text">
-                  <span className="username-highlight">{notifications.message?.split(" ")[0]}</span> {notifications.message}{' '}
-                  <span className="challenge-title">{notifications?.challenge?.title || "Tw Sum"}</span>
-                  <span className={`difficulty-badge badge-${notifications?.challenge?.difficulty.toLowerCase() || "Easy"}`}>
-                    {notifications.challenge.difficulty}
+                  {notifications.message}{" "}
+
+                  <span className="challenge-title">
+                    {challenge?.title || "Challenge"}
+                  </span>
+
+                  <span
+                    className={`difficulty-badge badge-${(challenge?.difficulty || "easy").toLowerCase()}`}
+                  >
+                    {challenge?.difficulty || "Easy"}
                   </span>
                 </div>
-                <div className="notification-timestamp">{notifications.createdAt}</div>
+
+                <div className="notification-timestamp">
+                  {new Date(notifications.createdAt).toLocaleString()}
+                </div>
+
                 <div className="action-buttons">
                   <button
                     className="btn-accept"
-                    onClick={() => handleChallengeResponse(notifications._id, notifications.challenge.id, 'accept')}
+                    onClick={() =>
+                      handleChallengeResponse(
+                        notifications._id,
+                        challenge?._id,
+                        "accept"
+                      )
+                    }
+                    disabled={!challenge}
                   >
                     <Trophy size={16} />
                     Accept Challenge
                   </button>
+
                   <button
                     className="btn-reject"
-                    onClick={() => handleChallengeResponse(notifications._id, notifications.challenge.id, 'reject')}
+                    onClick={() =>
+                      handleChallengeResponse(
+                        notifications._id,
+                        challenge?._id,
+                        "reject"
+                      )
+                    }
+                    disabled={!challenge}
                   >
                     <XCircle size={16} />
                     Decline
@@ -470,7 +507,8 @@ export default function Notifications({ onClose }) {
           </div>
         );
 
-        case 'friend-accepted':
+
+      case 'friend-accepted':
         return (
           <div key={notifications._id} className="notification-item">
             <div className="notification-header">
@@ -479,10 +517,10 @@ export default function Notifications({ onClose }) {
               </div>
               <div className="notification-content">
                 <div className="notification-text">
-                  <span className="username-highlight">{notifications.message?.split(" ")[0]}</span> {notifications.message}
+                  {notifications.message}
                 </div>
                 <div className="notification-timestamp">{notifications.createdAt}</div>
-                <button 
+                <button
                   className="btn-dismiss"
                   onClick={() => dismissNotification(notifications._id)}
                 >

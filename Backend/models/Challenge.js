@@ -24,7 +24,7 @@ const ChallengeSchema = new mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ["pending", "accepted", "completed"],
+        enum: ["pending", "accepted", "completed","cancelled"],
         default: "pending"
       },
       score: Number
@@ -33,8 +33,8 @@ const ChallengeSchema = new mongoose.Schema({
 
   difficulty: {
     type: String,
-    enum: ["easy", "medium", "hard"],
-    default: "easy"
+    enum: ["Easy", "Medium", "Hard"],
+    default: "Easy"
   },
 
   questions: [

@@ -38,11 +38,7 @@ export default function Home() {
     { id: 5, title: 'Valid Parentheses', friend: 'John', difficulty: 'Easy', status: 'Completed' }
   ];
 
-  const dummyNotifications = [
-    "🔥 New challenge available!",
-    "👤 Arjun sent you a friend request",
-    "📢 System update completed",
-  ];
+
 
   const displayedRooms = showAllRooms ? myRooms : myRooms.slice(0, 2);
   const displayedChallenges = showAllChallenges ? myChallenges : myChallenges.slice(0, 2);
