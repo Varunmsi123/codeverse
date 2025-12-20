@@ -6,10 +6,6 @@ exports.respondFriendRequest = async (req, res) => {
   try {
     const { notificationId, senderId, action } = req.body;
     const receiverId = req.user;
-    console.log(notificationId);
-    console.log(senderId);
-    console.log(action);
-    console.log(receiverId);
   
     if (!notificationId || !senderId || !action) {
       return res.json({

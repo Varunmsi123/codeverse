@@ -21,8 +21,6 @@ export default function Notifications({ onClose }) {
       });
 
       const data = await response.json();
-      console.log(userID);
-      console.log(data);
       if (data.success) {
         console.log("ye", data.notifications);
         setNotifications(data.notifications);
@@ -79,9 +77,10 @@ export default function Notifications({ onClose }) {
       });
 
       const data = await response.json();
+      console.log("Handel",data);
       if (data.success) {
-        // Remove notification from list
         setNotifications(notifications.filter(n => n.id !== notificationId));
+        alert(data.message);
       }
     } catch (error) {
       console.log("Challenge response error:", error);
@@ -435,9 +434,6 @@ export default function Notifications({ onClose }) {
 
       case 'challenge':
         const challenge = notifications?.challengeId;
-        console.log("challengeId:", notifications?.challengeId);
-        console.log("type:", typeof notifications?.challengeId);
-        console.log("ye notification",challenge._id);
         return (
           <div key={notifications._id} className="notification-item">
             <div className="notification-header">

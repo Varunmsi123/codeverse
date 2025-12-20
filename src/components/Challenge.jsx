@@ -16,6 +16,11 @@ export default function ChallengePage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+  console.log("Updated sentChallenges:", sentChallenges);
+}, [sentChallenges]);
+
+
   const fetchData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -40,20 +45,22 @@ export default function ChallengePage() {
       console.log("Ye dekho beta :",leetcodeProblems);
 
       
-      const sentRes = await fetch("http://localhost:5000/challenges/sent", {
+      const sentRes = await fetch("http://localhost:5000/challenge/sent", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
       const sentData = await sentRes.json();
-      if (sentData.success) setSentChallenges(sentData.challenges);
+      if (sentData.success) setSentChallenges(sentData.challenges.challengesSent);
+      
 
      
-      const receivedRes = await fetch("http://localhost:5000/challenges/received", {
+      const receivedRes = await fetch("http://localhost:5000/challenge/received", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
       const receivedData = await receivedRes.json();
-      if (receivedData.success) setReceivedChallenges(receivedData.challenges);
+      console.log("YE dekh",receivedData);
+      if (receivedData.success) setReceivedChallenges(receivedData.challenges.challengesReceived);
 
     } catch (error) {
       console.log("Fetch error:", error);
@@ -62,10 +69,6 @@ export default function ChallengePage() {
     }
   };
 
-  const sampleSentChallenges = [
-    { id: 1, to: 'sarah_dev', problem: 'Two Sum', difficulty: 'Easy', status: 'pending', sentAt: '2 hours ago' },
-    { id: 2, to: 'mike_codes', problem: 'Binary Tree Traversal', difficulty: 'Medium', status: 'completed', sentAt: '1 day ago' },
-  ];
 
   const sampleReceivedChallenges = [
     { id: 1, from: 'alex_coder', problem: 'Merge K Sorted Lists', difficulty: 'Hard', status: 'pending', receivedAt: '3 hours ago' },
@@ -74,8 +77,8 @@ export default function ChallengePage() {
 
   const displayFriends = friends;
   const displayProblems =  leetcodeProblems ;
-  const displaySent = sentChallenges.length > 0 ? sentChallenges : sampleSentChallenges;
-  const displayReceived = receivedChallenges.length > 0 ? receivedChallenges : sampleReceivedChallenges;
+  const displaySent = sentChallenges;
+  const displayReceived =  receivedChallenges;
 
   const filteredProblems = displayProblems.filter(p => 
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -611,22 +614,22 @@ export default function ChallengePage() {
               </div>
             ) : (
               displaySent.map(challenge => (
-                <div key={challenge.id} className="challenge-item">
+                <div key={challenge._id} className="challenge-item">
                   <div className="challenge-header">
                     <div className="challenge-user">
-                      <div className="user-avatar-small">{challenge.to[0].toUpperCase()}</div>
-                      <span style={{ color: '#e0e0e0', fontWeight: 600 }}>To: {challenge.to}</span>
+                      <div className="user-avatar-small">{challenge.participants[1].userId.username[0].toUpperCase()}</div>
+                      <span style={{ color: '#e0e0e0', fontWeight: 600 }}>To: {challenge.participants[1].userId.username}</span>
                     </div>
                     <span className={`badge badge-${challenge.status}`}>{challenge.status}</span>
                   </div>
-                  <div className="challenge-problem">{challenge.problem}</div>
+                  <div className="challenge-problem">{challenge.title}</div>
                   <div className="challenge-meta">
                     <span className={`badge badge-${challenge.difficulty.toLowerCase()}`}>
                       {challenge.difficulty}
                     </span>
                     <span>
                       <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '0.25rem' }} />
-                      {challenge.sentAt}
+                      {new Date(challenge.createdAt).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -646,22 +649,22 @@ export default function ChallengePage() {
               </div>
             ) : (
               displayReceived.map(challenge => (
-                <div key={challenge.id} className="challenge-item">
+                <div key={challenge._id} className="challenge-item">
                   <div className="challenge-header">
                     <div className="challenge-user">
-                      <div className="user-avatar-small">{challenge.from[0].toUpperCase()}</div>
-                      <span style={{ color: '#e0e0e0', fontWeight: 600 }}>From: {challenge.from}</span>
+                      <div className="user-avatar-small">{challenge.participants[1].userId.username[0].toUpperCase()}</div>
+                      <span style={{ color: '#e0e0e0', fontWeight: 600 }}>From: {challenge.participants[0].userId.username}</span>
                     </div>
                     <span className={`badge badge-${challenge.status}`}>{challenge.status}</span>
                   </div>
-                  <div className="challenge-problem">{challenge.problem}</div>
+                  <div className="challenge-problem">{challenge.title}</div>
                   <div className="challenge-meta">
                     <span className={`badge badge-${challenge.difficulty.toLowerCase()}`}>
                       {challenge.difficulty}
                     </span>
                     <span>
                       <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '0.25rem' }} />
-                      {challenge.receivedAt}
+                      {challenge.receivedAt || "Invalid"}
                     </span>
                   </div>
                 </div>

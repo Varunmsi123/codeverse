@@ -12,7 +12,7 @@ const ChallengeSchema = new mongoose.Schema({
 
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "UserCodeverse",
     required: true
   },
 
@@ -20,7 +20,7 @@ const ChallengeSchema = new mongoose.Schema({
     {
       userId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "UserCodeverse"
       },
       status: {
         type: String,
@@ -50,7 +50,7 @@ const ChallengeSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["upcoming", "active", "completed"],
+    enum: ["upcoming", "active", "completed","rejected"],
     default: "upcoming"
   }
 });
