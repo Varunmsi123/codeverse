@@ -267,6 +267,33 @@ exports.getchallengeReceived = async (req, res) => {
 
 
 
+exports.verifyChallenge=async(req,res)=>{
+try {
+    const userId = req.user;
+    const userName = await UserCodeverse.findById(userId)
+      .select("leetcodeUsername")
+
+      console.log(userName)
+       const response = await fetch(`https://leetcode-api-pied.vercel.app/user/${userName.leetcodeUsername}/submissions`);
+    const data = await response.json();
+
+
+    return res.json({
+      success: true,
+     submissions:data
+    });
+
+  } catch (err) {
+    console.log("Error in FetchReceivedChallengeController:", err);
+    return res.json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+}
+
+
+
 
 
 

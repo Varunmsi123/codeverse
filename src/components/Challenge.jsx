@@ -83,6 +83,63 @@ export default function ChallengePage() {
   const filteredProblems = displayProblems.filter(p => 
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+function toKebabCase(str) {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-');
+}
+const toSlug = (str) =>
+  str
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, "") // remove special chars
+    .replace(/\s+/g, "-");
+
+const handleVerify = async (name) => {
+  try {
+    const token = localStorage.getItem("token");
+    const challengeSlug = toSlug(name);
+console.log(challengeSlug);
+
+    const response = await fetch(
+      "http://localhost:5000/challenge/submissions",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const s= await response.json()
+    const submissions=s?.submissions;
+    console.log("Submissions:", submissions);
+
+    // Find a recent ACCEPTED submission that matches the challenge
+    const solved = submissions.some((submission) => {
+      if (submission.status !== 10) return false; // not Accepted
+
+      // flexible match
+      return (
+        submission.titleSlug.includes(challengeSlug) ||
+        challengeSlug.includes(submission.titleSlug)
+      );
+    });
+
+    if (solved) {
+      console.log("✅ Challenge solved!");
+      return true;
+    } else {
+      console.log("❌ Challenge not solved yet");
+      return false;
+    }
+  } catch (error) {
+    console.log("Verify challenge error:", error);
+    return false;
+  }
+};
 
   const handleSendChallenge = async () => {
     if (!selectedFriend || !selectedProblem) {
@@ -667,6 +724,14 @@ export default function ChallengePage() {
                       {challenge.receivedAt || "Invalid"}
                     </span>
                   </div>
+                  <div className='flex justify-between'>
+                    <a href={`https://leetcode.com/problems/${toKebabCase(challenge?.title)}`} className='bg-blue-500 p-2 my-5'>
+                      Redirect
+                    </a>
+                      <button onClick={()=>{handleVerify(challenge?.title)}} className='bg-blue-500 p-2 my-5'>
+                      Verify
+                    </button>
+                    </div>
                 </div>
               ))
             )}
