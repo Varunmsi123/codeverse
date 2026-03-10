@@ -25,11 +25,15 @@ export default function Notifications({ onClose }) {
         console.log("ye", data.notifications);
         setNotifications(data.notifications);
       }
+
+      fetchNotifications();
     } catch (error) {
       console.log("Notifications Error:", error);
     } finally {
       setLoading(false);
     }
+
+    
   };
 
   const handleFriendRequest = async (notificationId, senderId, action) => {

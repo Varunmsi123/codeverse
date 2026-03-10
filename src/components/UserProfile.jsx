@@ -432,7 +432,7 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
           )}
         </div>
 
-        {/* ------------------ CONTENT ------------------ */}
+        
         <div className="profile-content">
           <div className="stats-grid">
 

@@ -5,7 +5,6 @@ const {getFreinds, getProblems, sendChallenge, respondChallenge, getchallengeSen
 const { auth } = require("../middleware/auth");
 
 
-console.log("Ye Agya");
 router.get("/friends",auth,getFreinds);
 router.get("/problems",auth,getProblems);
 router.post("/send",auth,sendChallenge);

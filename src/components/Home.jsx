@@ -193,6 +193,7 @@ export default function Home() {
     console.log(showProfileCard);
   };
 
+
   const closeLeetVerification = () => {
     setShowLeetVerificationCard(false);
     setSelectedUser(null);
@@ -712,14 +713,19 @@ export default function Home() {
           <div style={{ position: 'relative' }}>
             <button
               className="notification-btn"
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowNotifications(!showNotifications);
+              }}
             >
               <Bell size={20} />
               <div className="notification-badge">3</div>
             </button>
 
             {showNotifications && (
-              <Notifications onClose={closeNotifications} />
+              <div onClick={(e) => e.stopPropagation()}>
+                <Notifications onClose={closeNotifications} />
+              </div>
             )}
           </div>
 
@@ -768,9 +774,9 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Main Content */}
+
       <div className="container">
-        {/* Welcome Section */}
+
         <div className="welcome-section">
           <div className="welcome-label">
             <span>✨</span>
@@ -798,15 +804,26 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="action-card">
+          <div
+            className="action-card"
+            onClick={() => navigate("/join-room")}
+            style={{ cursor: "pointer" }}
+          >
             <div className="card-icon-wrapper">
               <span style={{ fontSize: '2rem' }}>🚪</span>
             </div>
+
             <h5 className="card-title">Join a Room</h5>
             <p className="card-text">Enter an existing room with a code</p>
+
+
           </div>
 
-          <div className="action-card">
+
+          <div className="action-card"
+           onClick={() => navigate("/create-room")}
+            style={{ cursor: "pointer" }}
+          >
             <div className="card-icon-wrapper">
               <span style={{ fontSize: '2rem' }}>➕</span>
             </div>

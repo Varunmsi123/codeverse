@@ -9,6 +9,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const freindsRoutes = require("./routes/freindsRoutes");
 const challengeRoutes = require("./routes/challengeRoutes");
+const roomRoutes = require("./routes/roomRoutes");
 
 app.use(cors({
   origin: "http://localhost:5173", 
@@ -31,3 +32,4 @@ app.use("/auth", authRoutes);
 app.use("/users",userRoutes);
 app.use("/friends",freindsRoutes);
 app.use("/challenge",challengeRoutes);
+app.use("/room",roomRoutes);

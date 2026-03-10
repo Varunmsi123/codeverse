@@ -29,32 +29,24 @@ const roomSchema = new mongoose.Schema(
       },
     ],
 
-    // Collaborative Code
+    
     code: {
       type: String,
       default: "",
     },
 
-    // Programming language
+  
     language: {
       type: String,
       default: "javascript",
     },
 
-    // If this room is created for a challenge
-    leetcodeQuestionSlug: {
-      type: String,
-      default: null,
-    },
-
-    // Track last person who edited the code
     lastEditedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
 
-    // Active Socket.io clients
     activeSockets: [
       {
         userId: {
@@ -72,4 +64,7 @@ const roomSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model("Room", roomSchema);
+
+const Room = mongoose.model("Room", roomSchema);
+
+module.exports = Room;
