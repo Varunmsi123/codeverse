@@ -111,7 +111,7 @@ exports.sendFriendRequest = async (req, res) => {
       receiver: receiverID,
     });
 
-    // 📌 CREATE NOTIFICATION ENTRY
+    
     await Notification.create({
       userId: receiverID,
       senderId: UserID,
@@ -149,7 +149,7 @@ exports.leetVerification = async (req, res) => {
       });
     }
 
-    // If already verified — block generating new code
+   
     if (user.leetcodeVerified === true) {
       return res.json({
         success: false,
@@ -157,7 +157,7 @@ exports.leetVerification = async (req, res) => {
       });
     }
 
-    // If code already exists — do NOT generate again
+    
     if (user.leetcodeVerificationCode) {
       return res.json({
         success: true,
@@ -166,7 +166,7 @@ exports.leetVerification = async (req, res) => {
       });
     }
 
-    // Generate new verification code ONLY ONCE
+    
     const verificationCode = user.email.split("@")[0];
 
     user.leetcodeVerificationCode = verificationCode
@@ -230,14 +230,26 @@ exports.confirmVerification = async (req, res) => {
       emailPrefix.toLowerCase() === summary.toLowerCase() &&
       summary.includes(verificationCode)
     ) {
-      user.leetcodeVerified = true;
 
-      // ✅ Set the verified LeetCode username
+      
+    const totalSolved = data.submitStats.acSubmissionNum.find(
+    item => item.difficulty === "All"
+    )?.count || 0;
+
+      user.leetcodeVerified = true;
       user.leetcodeUsername = username;
+
+      console.log("Total Solved ",totalSolved);
+
+      
+      user.totalProblemsSolved = totalSolved;
 
       await user.save();
 
-      return res.json({ msg: "Verified!" });
+      return res.json({
+        msg: "Verified!",
+        totalS: totalSolved
+      });
     }
 
     return res.status(400).json({

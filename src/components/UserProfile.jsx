@@ -49,8 +49,8 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
   setUserProfile({
     username: user.username,
     leetcodeUsername: user.leetcodeUsername,
-    problemsSolved: user.totalProblemsSolved ?? 10,
-    challengesCompleted: user.challengesReceived?.length ?? 0,
+    problemsSolved: user.totalProblemsSolved,
+    challengesCompleted: user.challengesReceived?.length,
     friendsCount: user.friends?.length ?? 0,
     bio: user.bio || 'Passionate about algorithms and competitive programming',
     createdAt: user.createdAt
@@ -404,7 +404,7 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
           <X size={20} />
         </button>
 
-        {/* ------------------ HEADER ------------------ */}
+        
         <div className="profile-header">
           <div className="profile-avatar">
             {userProfile?.username?.[0]?.toUpperCase() || "U"}
@@ -442,7 +442,7 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
                 <div className="stat-label">Problems Solved</div>
               </div>
               <div className="stat-value">
-                {userProfile?.problemsSolved || 10}
+                {userProfile?.problemsSolved}
               </div>
             </div>
 
@@ -452,7 +452,7 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
                 <div className="stat-label">Challenges</div>
               </div>
               <div className="stat-value">
-                {userProfile?.challengesReceived?.length || 0}
+                {userProfile?.challengesCompleted}
               </div>
             </div>
 
@@ -462,7 +462,7 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
                 <div className="stat-label">Friends</div>
               </div>
               <div className="stat-value">
-                {userProfile?.friends?.length || 0}
+                {userProfile?.friendsCount}
               </div>
             </div>
 
@@ -472,10 +472,10 @@ export default function UserProfile({ userId, onClose, ReceiverID }) {
                 <div className="stat-label">Success Rate</div>
               </div>
               <div className="stat-value">
-                {userProfile?.problemsSolved || 100
+                {userProfile?.problemsSolved || 0
                   ? Math.round(
-                    (userProfile?.challengesCompleted || 50 /
-                      userProfile?.problemsSolved || 100) *
+                    (userProfile?.challengesCompleted  /
+                      userProfile?.problemsSolved ) *
                     100
                   )
                   : 0}
