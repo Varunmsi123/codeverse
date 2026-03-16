@@ -86,7 +86,7 @@ exports.sendChallenge = async (req, res) => {
       { $addToSet: { challengesReceived: challenge._id } }
     );
 
-    // 4️⃣ Create notification
+    
     const sender = await UserCodeverse.findById(senderId).select("username");
 
     await Notification.create({
@@ -274,8 +274,8 @@ try {
       .select("leetcodeUsername")
 
       console.log(userName)
-       const response = await fetch(`https://leetcode-api-pied.vercel.app/user/${userName.leetcodeUsername}/submissions`);
-    const data = await response.json();
+       const response = await fetch(`https://leetcode-api-pied.vercel.app/user/${userName.leetcodeUsername}/submissions?limit=5`);
+       const data = await response.json();
 
 
     return res.json({
@@ -292,6 +292,8 @@ try {
   }
 }
 
+
+exports.updateStaus=async()
 
 
 

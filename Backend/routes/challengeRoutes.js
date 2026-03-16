@@ -12,4 +12,5 @@ router.post("/respond",auth,respondChallenge);
 router.get("/sent",auth,getchallengeSent);
 router.get("/received",auth,getchallengeReceived);
 router.get("/submissions",auth,verifyChallenge);
+router.post("/updateStatus",auth,updateStatus);
 module.exports = router;

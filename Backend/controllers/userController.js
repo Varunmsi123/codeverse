@@ -29,15 +29,39 @@ exports.getProfile = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    const user = await UserCodeverse.findById(userId)
-      .select("-password");
-
+    const user = await UserCodeverse.findById(userId).select("-password");
 
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
+    }
+
+    // Fetch LeetCode stats if username exists
+    if (user.leetcodeUsername) {
+      try {
+        const response = await fetch(
+          `https://leetcode-api-pied.vercel.app/user/${user.leetcodeUsername}`
+        );
+
+        const data = await response.json();
+
+        const totalSolved = data.submitStats.acSubmissionNum.find(
+          (item) => item.difficulty === "All"
+        )?.count || 0;
+
+        
+        user.totalProblemsSolved = totalSolved;
+
+        await UserCodeverse.findByIdAndUpdate(userId, {
+          totalProblemsSolved: totalSolved,
+        });
+
+      } catch (leetcodeError) {
+        console.log("LeetCode API Error:", leetcodeError);
+        
+      }
     }
 
     return res.status(200).json({

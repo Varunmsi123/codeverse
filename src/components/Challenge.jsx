@@ -93,7 +93,7 @@ const toSlug = (str) =>
   str
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s]/g, "") // remove special chars
+    .replace(/[^a-z0-9\s]/g, "") 
     .replace(/\s+/g, "-");
 
 const handleVerify = async (name) => {
@@ -121,7 +121,7 @@ console.log(challengeSlug);
     const solved = submissions.some((submission) => {
       if (submission.status !== 10) return false; // not Accepted
 
-      // flexible match
+      
       return (
         submission.titleSlug.includes(challengeSlug) ||
         challengeSlug.includes(submission.titleSlug)
@@ -130,9 +130,20 @@ console.log(challengeSlug);
 
     if (solved) {
       console.log("✅ Challenge solved!");
+      const res = fetch("http://localhost:5000/challenge/updateStauts",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+
       return true;
     } else {
       console.log("❌ Challenge not solved yet");
+      alert("❌ Challenge not solved yet");
       return false;
     }
   } catch (error) {
