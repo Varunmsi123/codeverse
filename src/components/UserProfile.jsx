@@ -1,512 +1,179 @@
 import React, { useState, useEffect } from 'react';
 import { X, Users, Award, CheckCircle, Code, UserPlus, UserCheck } from 'lucide-react';
 
-export default function UserProfile({ userId, onClose, ReceiverID }) {
-  const [userProfile, setUserProfile] = useState(null);
+export default function UserProfile({ onClose, ReceiverID }) {
+  const [userProfile,  setUserProfile]  = useState(null);
   const [userProfile1, setUserProfile1] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isFriend, setIsFriend] = useState(false);
+  const [loading, setLoading]           = useState(true);
+  const [isFriend, setIsFriend]         = useState(false);
   const [friendRequestSent, setFriendRequestSent] = useState(false);
   const [formateddate, setFormateddate] = useState(null);
 
-
   useEffect(() => {
-    const fetchReceiverProfile = async () => {
+    const load = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const id = ReceiverID?._id || ReceiverID;
-
-        const res = await fetch(`http://localhost:5000/users/profile/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) {
-          console.log("HTTP Error:", res.status);
-          return;
-        }
-
-        const data = await res.json();
+        const token = localStorage.getItem('token');
+        const id    = ReceiverID?._id || ReceiverID;
+        const res   = await fetch(`http://localhost:5000/users/profile/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const data  = await res.json();
         setUserProfile1(data);
-        console.log("userProfile1 : ", data);
-        // console.log("userprofile me 1",userProfile);
-        setLoading(false);
-      } catch (err) {
-        console.log("Error fetching user:", err);
-      }
+      } catch (e) { console.log('Error fetching user:', e); }
+      finally { setLoading(false); }
     };
-
-    if (ReceiverID) fetchReceiverProfile();
+    if (ReceiverID) load();
   }, [ReceiverID]);
 
   useEffect(() => {
-  if (!userProfile1?.user) return;
-
-  const user = userProfile1.user;
-  console.log("Ye dekh betaa",user);
-
-  setUserProfile({
-    username: user.username,
-    leetcodeUsername: user.leetcodeUsername,
-    problemsSolved: user.totalProblemsSolved,
-    challengesCompleted: user.challengesReceived?.length,
-    friendsCount: user.friends?.length ?? 0,
-    bio: user.bio || 'Passionate about algorithms and competitive programming',
-    createdAt: user.createdAt
-  });
-
-}, [userProfile1]);
+    if (!userProfile1?.user) return;
+    const u = userProfile1.user;
+    setUserProfile({
+      username: u.username,
+      leetcodeUsername: u.leetcodeUsername,
+      problemsSolved: u.totalProblemsSolved,
+      challengesCompleted: u.challengesReceived?.length,
+      friendsCount: u.friends?.length ?? 0,
+      bio: u.bio || 'Passionate about algorithms and competitive programming',
+      createdAt: u.createdAt,
+    });
+  }, [userProfile1]);
 
   useEffect(() => {
-    if (userProfile?.createdAt) {
-      const createdAt = new Date(userProfile.createdAt);
-      const options = { year: "numeric", month: "long" };
-      const formattedDate = createdAt.toLocaleDateString("en-US", options);
-      setFormateddate(formattedDate);
-    }
+    if (userProfile?.createdAt)
+      setFormateddate(new Date(userProfile.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }));
   }, [userProfile]);
-
 
   const handleAddFriend = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("userID");
-      console.log(userId);
-      console.log(ReceiverID);
-
-      const res = await fetch("http://localhost:5000/users/request", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-        body: JSON.stringify({
-           UserID:userId,
-           receiverID:ReceiverID._id,
-        }),
+      const token = localStorage.getItem('token');
+      const uid   = localStorage.getItem('userID');
+      await fetch('http://localhost:5000/users/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ UserID: uid, receiverID: ReceiverID?._id || ReceiverID }),
       });
-
-      const data = await res.json();
-      console.log("Friend Request:", data);
-
       setFriendRequestSent(true);
-      setTimeout(() => alert("Friend request sent!"), 150);
-    } catch (error) {
-      console.error("Error adding friend:", error);
-    }
+      setTimeout(() => alert('Friend request sent!'), 150);
+    } catch (e) { console.error('Error adding friend:', e); }
   };
 
-  const closeProfile = () => {
-    setShowProfileCard(false);
-    setSelectedUser(null);
-  };
+  const stats = [
+    { icon: Code,        label: 'Problems Solved', value: userProfile?.problemsSolved ?? '—',      color: 'var(--info)',    bg: 'var(--accent-dim)',           border: 'var(--border-accent)' },
+    { icon: CheckCircle, label: 'Challenges',       value: userProfile?.challengesCompleted ?? '—', color: 'var(--success)', bg: 'rgba(74,222,128,0.10)',       border: 'rgba(74,222,128,0.20)' },
+    { icon: Users,       label: 'Friends',           value: userProfile?.friendsCount ?? '—',        color: '#a78bfa',        bg: 'rgba(167,139,250,0.10)',       border: 'rgba(167,139,250,0.20)' },
+    { icon: Award,       label: 'Success Rate',
+      value: userProfile?.problemsSolved ? `${Math.round((userProfile.challengesCompleted / userProfile.problemsSolved) * 100)}%` : '0%',
+      color: 'var(--warning)', bg: 'rgba(251,191,36,0.10)', border: 'rgba(251,191,36,0.20)' },
+  ];
 
-  const handleClose = () => {
-    if (onClose) onClose();
-  };
-
-  const overlayStyles = `
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.75);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 1rem;
-      backdrop-filter: blur(4px);
-    }
-  `;
-
-  const styles = `
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    .profile-card {
-      background-color: #0f0f0f;
-      border: 1px solid #2a2a2a;
-      border-radius: 16px;
-      max-width: 700px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-      position: relative;
-    }
-    .profile-card::-webkit-scrollbar {
-      width: 8px;
-    }
-    .profile-card::-webkit-scrollbar-track {
-      background: #1a1a1a;
-      border-radius: 4px;
-    }
-    .profile-card::-webkit-scrollbar-thumb {
-      background: #3a3a3a;
-      border-radius: 4px;
-    }
-    .profile-card::-webkit-scrollbar-thumb:hover {
-      background: #4a4a4a;
-    }
-    .close-btn {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background-color: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      color: #e0e0e0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-      z-index: 10;
-    }
-    .close-btn:hover {
-      background-color: #252525;
-      border-color: #3a3a3a;
-    }
-    .profile-header {
-      background: linear-gradient(135deg, #1a1a1a, #252525);
-      border-bottom: 1px solid #2a2a2a;
-      padding: 2.5rem 2rem 2rem;
-      text-align: center;
-      position: relative;
-    }
-    .profile-avatar {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #00d9ff, #0a7ea4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: #000;
-      margin: 0 auto 1rem;
-      border: 3px solid #2a2a2a;
-    }
-    .profile-username {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 0.5rem;
-    }
-    .profile-bio {
-      color: #a0a0a0;
-      font-size: 0.95rem;
-      margin-bottom: 1rem;
-    }
-    .profile-meta {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 1.5rem;
-      color: #a0a0a0;
-      font-size: 0.9rem;
-      margin-bottom: 1.5rem;
-    }
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .add-friend-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: linear-gradient(135deg, #00d9ff, #0a7ea4);
-      border: none;
-      color: #000;
-      padding: 0.75rem 2rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 600;
-      transition: all 0.3s;
-    }
-    .add-friend-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 217, 255, 0.3);
-    }
-    .add-friend-btn:disabled {
-      background: #2a2a2a;
-      color: #808080;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .friend-status-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background-color: #1a4d2e;
-      border: 1px solid #2a5f3a;
-      color: #4ade80;
-      padding: 0.75rem 2rem;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: default;
-    }
-    .profile-content {
-      padding: 2rem;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .stat-card {
-      background: linear-gradient(135deg, #1a1a1a, #252525);
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 1.5rem;
-      transition: all 0.3s;
-    }
-    .stat-card:hover {
-      border-color: #3a3a3a;
-      transform: translateY(-2px);
-    }
-    .stat-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.75rem;
-    }
-    .stat-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .stat-icon-blue {
-      background: linear-gradient(135deg, #1e3a5f, #0a4d6e);
-      color: #00d9ff;
-    }
-    .stat-icon-green {
-      background: linear-gradient(135deg, #1a4d2e, #0d3d1f);
-      color: #4ade80;
-    }
-    .stat-icon-purple {
-      background: linear-gradient(135deg, #3a1e5f, #2a1447);
-      color: #a78bfa;
-    }
-    .stat-icon-orange {
-      background: linear-gradient(135deg, #4d3a1a, #3d2a0a);
-      color: #fbbf24;
-    }
-    .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 0.25rem;
-    }
-    .stat-label {
-      color: #a0a0a0;
-      font-size: 0.85rem;
-      font-weight: 500;
-    }
-    .info-section {
-      background: linear-gradient(135deg, #1a1a1a, #252525);
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-    .section-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #ffffff;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #2a2a2a;
-    }
-    .info-row:last-child {
-      border-bottom: none;
-    }
-    .info-label {
-      color: #a0a0a0;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-    .info-value {
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-    .leetcode-link {
-      color: #00d9ff;
-      text-decoration: none;
-      transition: color 0.3s;
-    }
-    .leetcode-link:hover {
-      color: #00b8d9;
-      text-decoration: underline;
-    }
-    @media (max-width: 768px) {
-      .profile-header {
-        padding: 2rem 1.5rem 1.5rem;
-      }
-      .profile-username {
-        font-size: 1.5rem;
-      }
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-      .profile-meta {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-    }
-  `;
-
-  if (loading) {
-    return (
-      <div className="modal-overlay">
-        <style>{overlayStyles + styles}</style>
-        <div className="profile-card">
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#e0e0e0', width: '100vw' }}>
-            Loading...
-          </div>
-        </div>
+  if (loading) return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}>
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
+          style={{ borderColor: 'var(--accent-dim)', borderTopColor: 'var(--accent)' }} />
+        <p className="text-xs font-mono tracking-widest uppercase" style={{ color: 'var(--fg-muted)' }}>Loading</p>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <style>{overlayStyles + styles}</style>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6"
+      style={{ background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
+      onClick={onClose}>
+      <div className="relative w-full max-w-lg rounded-2xl overflow-hidden animate-fade-up max-h-[90vh] overflow-y-auto"
+        style={{
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 32px 80px rgba(0,0,0,0.85)',
+        }}
+        onClick={e => e.stopPropagation()}>
 
-      <div className="profile-card" onClick={(e) => e.stopPropagation()}>
-        <button className="close-btn" onClick={handleClose}>
-          <X size={20} />
+        {/* Close */}
+        <button className="absolute top-4 right-4 z-20 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-150"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--fg-muted)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--fg)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)';       e.currentTarget.style.color = 'var(--fg-muted)'; }}
+          onClick={onClose}>
+          <X size={14} />
         </button>
 
-        
-        <div className="profile-header">
-          <div className="profile-avatar">
-            {userProfile?.username?.[0]?.toUpperCase() || "U"}
+        {/* Header */}
+        <div className="px-5 sm:px-6 pt-10 pb-6 text-center"
+          style={{ borderBottom: '1px solid var(--border)', background: 'linear-gradient(180deg, var(--accent-dim) 0%, transparent 100%)' }}>
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl sm:text-3xl font-bold text-white"
+            style={{ background: 'linear-gradient(135deg, var(--accent), var(--info))', boxShadow: '0 0 0 3px var(--accent-dim), 0 8px 24px var(--accent-glow)' }}>
+            {userProfile?.username?.[0]?.toUpperCase() || 'U'}
           </div>
-
-          <h1 className="profile-username">{userProfile?.username || "A"}</h1>
-          <p className="profile-bio">{userProfile?.bio}</p>
-
-          <div className="profile-meta">
-            <span className="meta-item">📅 Joined {formateddate}</span>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold mb-1 tracking-tight" style={{ color: 'var(--fg)' }}>{userProfile?.username || '—'}</h1>
+          <p className="text-sm leading-relaxed mb-3 mx-auto max-w-xs" style={{ color: 'var(--fg-muted)' }}>{userProfile?.bio}</p>
+          {formateddate && <p className="text-xs font-mono mb-5" style={{ color: 'var(--fg-muted)' }}>📅 Joined {formateddate}</p>}
 
           {isFriend ? (
-            <button className="friend-status-btn">
-              <UserCheck size={18} /> Friends
-            </button>
+            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold"
+              style={{ background: 'rgba(74,222,128,0.1)', color: 'var(--success)', border: '1px solid rgba(74,222,128,0.2)' }}>
+              <UserCheck size={15} /> Friends
+            </span>
           ) : friendRequestSent ? (
-            <button className="add-friend-btn" disabled>
-              <UserCheck size={18} /> Request Sent
-            </button>
+            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold"
+              style={{ background: 'var(--surface)', color: 'var(--fg-muted)', border: '1px solid var(--border)' }}>
+              <UserCheck size={15} /> Request Sent
+            </span>
           ) : (
-            <button className="add-friend-btn" onClick={handleAddFriend}>
-              <UserPlus size={18} /> Add Friend
+            <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-all duration-200 hover:-translate-y-px"
+              style={{ background: 'var(--accent)', boxShadow: '0 0 0 1px var(--border-accent), 0 4px 12px var(--accent-glow)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-bright)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--accent)'}
+              onClick={handleAddFriend}>
+              <UserPlus size={15} /> Add Friend
             </button>
           )}
         </div>
 
-        
-        <div className="profile-content">
-          <div className="stats-grid">
-
-            <div className="stat-card">
-              <div className="stat-header">
-                <div className="stat-icon stat-icon-blue"><Code size={22} /></div>
-                <div className="stat-label">Problems Solved</div>
+        {/* Stats */}
+        <div className="p-5 sm:p-6">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mb-5">
+            {stats.map(({ icon: Icon, label, value, color, bg, border }) => (
+              <div key={label}
+                className="p-3.5 sm:p-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)';       e.currentTarget.style.borderColor = 'var(--border)'; }}
+              >
+                <div className="flex items-center gap-2 mb-2.5">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center"
+                    style={{ background: bg, border: `1px solid ${border}` }}>
+                    <Icon size={13} style={{ color }} />
+                  </div>
+                  <span className="text-xs" style={{ color: 'var(--fg-muted)' }}>{label}</span>
+                </div>
+                <p className="text-xl sm:text-2xl font-semibold tracking-tight" style={{ color: 'var(--fg)' }}>{value}</p>
               </div>
-              <div className="stat-value">
-                {userProfile?.problemsSolved}
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-header">
-                <div className="stat-icon stat-icon-green"><CheckCircle size={22} /></div>
-                <div className="stat-label">Challenges</div>
-              </div>
-              <div className="stat-value">
-                {userProfile?.challengesCompleted}
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-header">
-                <div className="stat-icon stat-icon-purple"><Users size={22} /></div>
-                <div className="stat-label">Friends</div>
-              </div>
-              <div className="stat-value">
-                {userProfile?.friendsCount}
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-header">
-                <div className="stat-icon stat-icon-orange"><Award size={22} /></div>
-                <div className="stat-label">Success Rate</div>
-              </div>
-              <div className="stat-value">
-                {userProfile?.problemsSolved || 0
-                  ? Math.round(
-                    (userProfile?.challengesCompleted  /
-                      userProfile?.problemsSolved ) *
-                    100
-                  )
-                  : 0}
-                %
-              </div>
-            </div>
+            ))}
           </div>
 
-          <div className="info-section">
-            <h2 className="section-title"><Code size={20} /> Coding Profile</h2>
-
-            <div className="info-row">
-              <span className="info-label">LeetCode Username</span>
-              <span className="info-value">
-                <a
-                  href={`https://leetcode.com/${userProfile?.leetcodeUsername}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="leetcode-link"
-                >
-                  @{userProfile?.leetcodeUsername || "-"}
-                </a>
-              </span>
+          {/* Coding profile */}
+          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
+            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+              <Code size={14} style={{ color: 'var(--info)' }} />
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Coding Profile</h2>
             </div>
-
-
-            <div className="info-row">
-              <span className="info-label">Total Problems</span>
-              <span className="info-value">{userProfile?.problemsSolved || 100}</span>
-            </div>
-
+            {[
+              {
+                label: 'LeetCode',
+                value: userProfile?.leetcodeUsername
+                  ? <a href={`https://leetcode.com/${userProfile.leetcodeUsername}`} target="_blank" rel="noopener noreferrer"
+                      className="font-mono hover:underline" style={{ color: 'var(--warning)' }}>@{userProfile.leetcodeUsername}</a>
+                  : <span style={{ color: 'var(--fg-muted)' }}>—</span>,
+              },
+              { label: 'Total Problems', value: userProfile?.problemsSolved ?? '—' },
+            ].map(({ label, value }, i, arr) => (
+              <div key={label} className="flex items-center justify-between px-4 py-3"
+                style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <span className="text-xs" style={{ color: 'var(--fg-muted)' }}>{label}</span>
+                <span className="text-sm font-medium" style={{ color: 'var(--fg)' }}>{value}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

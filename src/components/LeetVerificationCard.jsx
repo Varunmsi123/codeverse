@@ -1,40 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, Copy, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { X, CheckCircle, Copy, Check, ShieldCheck } from 'lucide-react';
 
 export default function LeetCodeVerification({ onClose, verificationCode, userId }) {
-  const [leetcodeUsername, setLeetcodeUsername] = useState(userId?.email||"");
-  const [isVerified, setIsVerified] = useState(false);
-  const [verifiedUsername, setVerifiedUsername] = useState('');
+  const [leetcodeUsername, setLeetcodeUsername] = useState('');
+  const [isVerified]   = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState('');
-
-const navigate=useNavigate()
-  // Check if user is already verified on component mount
-  // useEffect(() => {
-  //   checkVerificationStatus();
-  // }, [userId]);
-
-  // const checkVerificationStatus = async (userId) => {
-  //   try {
-  //     const token = localStorage.getItem("token");
-  //     const response = await fetch(`http://localhost:5000/users/verifyleet`, {
-  //       method: "GET",
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-
-  //     const data = await response.json();
-  //     if (data.isVerified) {
-  //       setIsVerified(true);
-  //       setVerifiedUsername(data.leetcodeUsername);
-  //     }
-  //   } catch (error) {
-  //     console.log("Verification status check error:", error);
-  //   }
-  // };
+  const [error, setError]   = useState('');
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(verificationCode);
@@ -43,343 +15,122 @@ const navigate=useNavigate()
   };
 
   const handleVerify = async () => {
-    const token = localStorage.getItem("token");
-    console.log(token);
-  const res = await fetch("http://localhost:5000/users/verifyleet", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    body: JSON.stringify({
-      userId: userId,
-      leetUsername : leetcodeUsername
-    })
-  });
-
-  const data = await res.json();
- console.log(data);
- 
-  alert(data.msg);
-   if(data?.message=="You are already verified on LeetCode!"){
-    onClose()
-  }
-};
-
-  const styles = `
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.75);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 1rem;
-      backdrop-filter: blur(4px);
-    }
-    .verification-card {
-      background-color: #0f0f0f;
-      border: 1px solid #2a2a2a;
-      border-radius: 16px;
-      max-width: 550px;
-      width: 100%;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-      position: relative;
-      overflow: hidden;
-    }
-    .close-btn {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background-color: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      color: #e0e0e0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-      z-index: 10;
-    }
-    .close-btn:hover {
-      background-color: #252525;
-      border-color: #3a3a3a;
-    }
-    .card-header {
-      background: linear-gradient(135deg, #1a1a1a, #252525);
-      border-bottom: 1px solid #2a2a2a;
-      padding: 2rem;
-      text-align: center;
-    }
-    .leetcode-icon {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 1rem;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #fbbf24, #f59e0b);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      border: 3px solid #2a2a2a;
-    }
-    .card-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 0.5rem;
-    }
-    .card-subtitle {
-      color: #a0a0a0;
-      font-size: 0.95rem;
-    }
-    .card-content {
-      padding: 2rem;
-    }
-    .verified-section {
-      text-align: center;
-      padding: 2rem 0;
-    }
-    .verified-icon {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 1.5rem;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #1a4d2e, #0d3d1f);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #4ade80;
-    }
-    .verified-text {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #4ade80;
-      margin-bottom: 0.5rem;
-    }
-    .verified-username {
-      font-size: 1.1rem;
-      color: #e0e0e0;
-      font-family: 'Courier New', monospace;
-    }
-    .input-group {
-      margin-bottom: 1.5rem;
-    }
-    .input-label {
-      display: block;
-      color: #e0e0e0;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      font-size: 0.95rem;
-    }
-    .input-field {
-      width: 100%;
-      padding: 0.85rem 1rem;
-      background-color: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      color: #e0e0e0;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.3s;
-    }
-    .input-field:focus {
-      border-color: #fbbf24;
-    }
-    .input-field::placeholder {
-      color: #808080;
-    }
-    .code-section {
-      background: linear-gradient(135deg, #1a1a1a, #252525);
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-    .code-label {
-      color: #a0a0a0;
-      font-size: 0.9rem;
-      margin-bottom: 0.75rem;
-      font-weight: 500;
-    }
-    .code-box {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background-color: #0f0f0f;
-      border: 1px solid #3a3a3a;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-    .code-text {
-      color: #fbbf24;
-      font-family: 'Courier New', monospace;
-      font-size: 1rem;
-      font-weight: 600;
-      flex: 1;
-    }
-    .copy-btn {
-      background-color: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      color: #e0e0e0;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.9rem;
-      transition: all 0.3s;
-    }
-    .copy-btn:hover {
-      background-color: #252525;
-      border-color: #3a3a3a;
-    }
-    .copy-btn.copied {
-      background-color: #1a4d2e;
-      border-color: #2a5f3a;
-      color: #4ade80;
-    }
-    .instruction-text {
-      color: #a0a0a0;
-      font-size: 0.9rem;
-      line-height: 1.6;
-    }
-    .verify-btn {
-      width: 100%;
-      padding: 1rem;
-      background: linear-gradient(135deg, #fbbf24, #f59e0b);
-      border: none;
-      border-radius: 8px;
-      color: #000;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .verify-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
-    }
-    .verify-btn:disabled {
-      background: #2a2a2a;
-      color: #808080;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .error-message {
-      background-color: #4d1a1a;
-      border: 1px solid #7a2828;
-      color: #f87171;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-    }
-    @media (max-width: 768px) {
-      .card-header {
-        padding: 1.5rem;
-      }
-      .card-content {
-        padding: 1.5rem;
-      }
-      .card-title {
-        font-size: 1.5rem;
-      }
-    }
-  `;
+    if (!leetcodeUsername.trim()) { setError('Please enter your LeetCode username.'); return; }
+    setIsVerifying(true);
+    setError('');
+    try {
+      const token = localStorage.getItem('token');
+      const res   = await fetch('http://localhost:5000/users/verifyleet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ userId, leetUsername: leetcodeUsername }),
+      });
+      const data = await res.json();
+      alert(data.msg || data.message);
+      if (data?.message === 'You are already verified on LeetCode!') onClose();
+    } catch (e) { setError('Verification failed. Please try again.'); }
+    finally { setIsVerifying(false); }
+  };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <style>{styles}</style>
-      
-      <div className="verification-card" onClick={(e) => e.stopPropagation()}>
-        <button className="close-btn" onClick={onClose}>
-          <X size={20} />
-        </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}
+      onClick={onClose}>
+      <div className="relative w-full max-w-md rounded-2xl overflow-hidden animate-fade-up"
+        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 24px 64px rgba(0,0,0,0.8)' }}
+        onClick={e => e.stopPropagation()}>
 
-        <div className="card-header">
-          <div className="leetcode-icon">
-            <span>💻</span>
+        {/* Close */}
+        <button className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-150"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--fg-muted)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--fg)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)';       e.currentTarget.style.color = 'var(--fg-muted)'; }}
+          onClick={onClose}><X size={14} /></button>
+
+        {/* Header */}
+        <div className="px-6 py-6 text-center" style={{ borderBottom: '1px solid var(--border)', background: 'linear-gradient(180deg, rgba(251,191,36,0.05) 0%, transparent 100%)' }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.25)', boxShadow: '0 0 30px rgba(251,191,36,0.08)' }}>
+            <span className="text-3xl">💻</span>
           </div>
-          <h2 className="card-title">LeetCode Verification</h2>
-          <p className="card-subtitle">
-            {isVerified ? 'Your account is verified' : 'Verify your LeetCode account'}
+          <h2 className="text-xl font-semibold mb-1" style={{ color: 'var(--fg)' }}>LeetCode Verification</h2>
+          <p className="text-sm" style={{ color: 'var(--fg-muted)' }}>
+            {isVerified ? 'Your account is verified' : 'Link your LeetCode profile to track stats'}
           </p>
         </div>
 
-        <div className="card-content">
+        {/* Body */}
+        <div className="p-6">
           {isVerified ? (
-            // Verified State
-            <div className="verified-section">
-              <div className="verified-icon">
-                <CheckCircle size={40} />
+            <div className="flex flex-col items-center py-8 gap-4">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                <CheckCircle size={32} style={{ color: 'var(--success)' }} />
               </div>
-              <div className="verified-text">✓ Verified</div>
-              <div className="verified-username">@{verifiedUsername}</div>
+              <div className="text-center">
+                <p className="text-lg font-semibold" style={{ color: 'var(--success)' }}>Verified!</p>
+                <p className="text-sm mt-1 font-mono" style={{ color: 'var(--fg-muted)' }}>Account linked successfully</p>
+              </div>
             </div>
           ) : (
-            // Verification Form
-            <>
-              <div className="input-group">
-                <label className="input-label">LeetCode Username</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  placeholder="Enter your LeetCode username"
+            <div className="flex flex-col gap-4">
+              {/* Username field */}
+              <div>
+                <label className="block text-xs font-mono tracking-widest uppercase mb-2" style={{ color: 'var(--fg-muted)' }}>
+                  LeetCode Username
+                </label>
+                <input type="text"
+                  className="w-full px-4 py-3 text-sm rounded-xl focus:outline-none transition-all"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                  placeholder="your-leetcode-username"
                   value={leetcodeUsername}
-                  onChange={(e) => setLeetcodeUsername(e.target.value)}
+                  onChange={e => { setLeetcodeUsername(e.target.value); setError(''); }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--border-accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-dim)'; }}
+                  onBlur={e  => { e.target.style.borderColor = 'var(--border)';        e.target.style.boxShadow = 'none'; }}
                 />
               </div>
 
-              <div className="code-section">
-                <div className="code-label">Your Verification Code</div>
-                <div className="code-box">
-                  <span className="code-text">{verificationCode}</span>
-                  <button 
-                    className={`copy-btn ${copied ? 'copied' : ''}`}
-                    onClick={handleCopyCode}
-                  >
-                    {copied ? (
-                      <>
-                        <Check size={16} />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={16} />
-                        Copy
-                      </>
-                    )}
+              {/* Verification code box */}
+              <div className="rounded-xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <p className="text-xs font-mono tracking-widest uppercase mb-3" style={{ color: 'var(--fg-muted)' }}>
+                  Verification Code
+                </p>
+                <div className="flex items-center justify-between rounded-xl px-4 py-3 mb-3"
+                  style={{ background: 'var(--bg-deep)', border: '1px solid var(--border)' }}>
+                  <code className="text-sm font-mono font-semibold" style={{ color: 'var(--warning)' }}>{verificationCode}</code>
+                  <button
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200"
+                    style={copied
+                      ? { background: 'rgba(74,222,128,0.10)', color: 'var(--success)', border: '1px solid rgba(74,222,128,0.25)' }
+                      : { background: 'var(--surface-hover)', color: 'var(--fg-muted)', border: '1px solid var(--border)' }}
+                    onClick={handleCopyCode}>
+                    {copied ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
                   </button>
                 </div>
-                <p className="instruction-text">
-                  📝 Add this code to your LeetCode bio and click verify to get verified.
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--fg-muted)' }}>
+                  📝 Paste this code in your LeetCode bio, then click Verify below.
                 </p>
               </div>
 
+              {/* Error */}
               {error && (
-                <div className="error-message">
+                <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', color: 'var(--danger)' }}>
                   {error}
                 </div>
               )}
 
-              <button 
-                className="verify-btn"
+              {/* CTA */}
+              <button
+                className="w-full py-3 text-sm font-semibold flex items-center justify-center gap-2 rounded-xl text-white transition-all duration-200 hover:-translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+                style={{ background: 'var(--accent)', boxShadow: '0 0 0 1px var(--border-accent), 0 4px 12px var(--accent-glow)' }}
+                onMouseEnter={e => { if (!isVerifying) e.currentTarget.style.background = 'var(--accent-bright)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent)'; }}
                 onClick={handleVerify}
-                disabled={isVerifying}
-              >
-                {isVerifying ? 'Verifying...' : 'Verify Account'}
+                disabled={isVerifying}>
+                <ShieldCheck size={16} />
+                {isVerifying ? 'Verifying…' : 'Verify Account'}
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>

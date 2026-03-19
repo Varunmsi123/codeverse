@@ -1,753 +1,363 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Search, Send, Trophy, Clock, CheckCircle, XCircle, User } from 'lucide-react';
+import { ArrowLeft, Search, Send, Trophy, Clock, ExternalLink, ShieldCheck } from 'lucide-react';
 
 export default function ChallengePage() {
   const [friends, setFriends] = useState([]);
   const [leetcodeProblems, setLeetcodeProblems] = useState([]);
   const [sentChallenges, setSentChallenges] = useState([]);
   const [receivedChallenges, setReceivedChallenges] = useState([]);
-  const [selectedFriend, setSelectedFriend] = useState([]);
+  const [selectedFriend, setSelectedFriend] = useState(null);
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('create');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-  console.log("Updated sentChallenges:", sentChallenges);
-}, [sentChallenges]);
-
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
 
-     
-      const friendsRes = await fetch("http://localhost:5000/challenge/friends", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const friendsData = await friendsRes.json();
-      console.log(friendsData);
-      if (friendsData.success) setFriends(friendsData.friends);
+      const [fr, pr, sr, rr] = await Promise.all([
+        fetch('http://localhost:5000/challenge/friends', { headers }),
+        fetch('http://localhost:5000/challenge/problems', { headers }),
+        fetch('http://localhost:5000/challenge/sent', { headers }),
+        fetch('http://localhost:5000/challenge/received', { headers }),
+      ]);
 
-      
-      const problemsRes = await fetch("http://localhost:5000/challenge/problems", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const problemsData = await problemsRes.json();
-      console.log(problemsData);
-      if (problemsData.success) setLeetcodeProblems(problemsData.data);
-      console.log("Ye dekho beta :",leetcodeProblems);
+      const [fd, pd, sd, rd] = await Promise.all([fr.json(), pr.json(), sr.json(), rr.json()]);
 
-      
-      const sentRes = await fetch("http://localhost:5000/challenge/sent", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const sentData = await sentRes.json();
-      if (sentData.success) setSentChallenges(sentData.challenges.challengesSent);
-      
-
-     
-      const receivedRes = await fetch("http://localhost:5000/challenge/received", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const receivedData = await receivedRes.json();
-      console.log("YE dekh",receivedData);
-      if (receivedData.success) setReceivedChallenges(receivedData.challenges.challengesReceived);
-
-    } catch (error) {
-      console.log("Fetch error:", error);
-    } finally {
-      setLoading(false);
-    }
+      if (fd.success) setFriends(fd.friends);
+      if (pd.success) setLeetcodeProblems(pd.data);
+      if (sd.success) setSentChallenges(sd.challenges.challengesSent);
+      if (rd.success) setReceivedChallenges(rd.challenges.challengesReceived);
+    } catch (error) { console.log('Fetch error:', error); }
+    finally { setLoading(false); }
   };
 
+  const toSlug = str => str.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
 
-  const sampleReceivedChallenges = [
-    { id: 1, from: 'alex_coder', problem: 'Merge K Sorted Lists', difficulty: 'Hard', status: 'pending', receivedAt: '3 hours ago' },
-    { id: 2, from: 'emma_tech', problem: 'Valid Parentheses', difficulty: 'Easy', status: 'accepted', receivedAt: '5 hours ago' },
-  ];
-
-  const displayFriends = friends;
-  const displayProblems =  leetcodeProblems ;
-  const displaySent = sentChallenges;
-  const displayReceived =  receivedChallenges;
-
-  const filteredProblems = displayProblems.filter(p => 
-    p.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-function toKebabCase(str) {
-  return str
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-');
-}
-const toSlug = (str) =>
-  str
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s]/g, "") 
-    .replace(/\s+/g, "-");
-
-const handleVerify = async (name) => {
-  try {
-    const token = localStorage.getItem("token");
-    const challengeSlug = toSlug(name);
-console.log(challengeSlug);
-
-    const response = await fetch(
-      "http://localhost:5000/challenge/submissions",
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const s= await response.json()
-    const submissions=s?.submissions;
-    console.log("Submissions:", submissions);
-
-    // Find a recent ACCEPTED submission that matches the challenge
-    const solved = submissions.some((submission) => {
-      if (submission.status !== 10) return false; // not Accepted
-
-      
-      return (
-        submission.titleSlug.includes(challengeSlug) ||
-        challengeSlug.includes(submission.titleSlug)
-      );
-    });
-
-    if (solved) {
-      console.log("✅ Challenge solved!");
-      const res = fetch("http://localhost:5000/challenge/updateStauts",
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+  const handleVerify = async (name) => {
+    try {
+      const token = localStorage.getItem('token');
+      const challengeSlug = toSlug(name);
+      const response = await fetch('http://localhost:5000/challenge/submissions', {
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
-
-
-      return true;
-    } else {
-      console.log("❌ Challenge not solved yet");
-      alert("❌ Challenge not solved yet");
-      return false;
-    }
-  } catch (error) {
-    console.log("Verify challenge error:", error);
-    return false;
-  }
-};
+      const s = await response.json();
+      const submissions = s?.submissions;
+      const solved = submissions.some(sub =>
+        sub.status === 10 && (sub.titleSlug.includes(challengeSlug) || challengeSlug.includes(sub.titleSlug))
+      );
+      alert(solved ? '✅ Challenge solved!' : '❌ Not solved yet');
+      return solved;
+    } catch (error) { console.log('Verify error:', error); return false; }
+  };
 
   const handleSendChallenge = async () => {
-    if (!selectedFriend || !selectedProblem) {
-      alert('Please select a friend and a problem');
-      return;
-    }
-
+    if (!selectedFriend || !selectedProblem) { alert('Please select a friend and a problem'); return; }
     try {
-      const token = localStorage.getItem("token");
-      console.log(selectedProblem);
-      console.log(selectedFriend);
-      const response = await fetch("http://localhost:5000/challenge/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          friendId: selectedFriend._id,
-          problemId: selectedProblem.id,
-          title: selectedProblem.title,
-          difficulty:selectedProblem.difficulty,
-        }),
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/challenge/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ friendId: selectedFriend._id, problemId: selectedProblem.id, title: selectedProblem.title, difficulty: selectedProblem.difficulty }),
       });
-
       const data = await response.json();
       if (data.success) {
-        alert('Challenge sent successfully!');
+        alert('Challenge sent!');
         setSelectedFriend(null);
         setSelectedProblem(null);
         fetchData();
       }
-    } catch (error) {
-      console.log("Send challenge error:", error);
-    }
+    } catch (error) { console.log('Send challenge error:', error); }
   };
 
-  const styles = `
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    .challenge-page {
-      min-height: 100vh;
-      width:100vw;
-      background-color: #0f0f0f;
-      color: #e0e0e0;
-    }
-    .header {
-      background-color: #1a1a1a;
-      border-bottom: 1px solid #2a2a2a;
-      padding: 1.5rem 2rem;
-    }
-    .header-content {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .back-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background-color: #2a2a2a;
-      border: none;
-      color: #e0e0e0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.3s;
-    }
-    .back-btn:hover {
-      background-color: #333;
-    }
-    .page-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #ffffff;
-    }
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-    .tabs {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-      border-bottom: 1px solid #2a2a2a;
-    }
-    .tab {
-      padding: 1rem 1.5rem;
-      background: transparent;
-      border: none;
-      color: #a0a0a0;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.3s;
-    }
-    .tab:hover {
-      color: #e0e0e0;
-    }
-    .tab.active {
-      color: #00d9ff;
-      border-bottom-color: #00d9ff;
-    }
-    .grid-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-    .section {
-      background: linear-gradient(135deg, #1a1a1a, #252525);
-      border: 1px solid #2a2a2a;
-      border-radius: 16px;
-      padding: 1.5rem;
-    }
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-    .section-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #ffffff;
-    }
-    .search-box {
-      width: 100%;
-      padding: 0.75rem 1rem 0.75rem 2.5rem;
-      background-color: #0f0f0f;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      color: #e0e0e0;
-      font-size: 0.95rem;
-      outline: none;
-      margin-bottom: 1rem;
-    }
-    .search-box:focus {
-      border-color: #00d9ff;
-    }
-    .search-wrapper {
-      position: relative;
-    }
-    .search-icon {
-      position: absolute;
-      left: 0.75rem;
-      top: 0.85rem;
-      color: #808080;
-    }
-    .list {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    .list::-webkit-scrollbar {
-      width: 6px;
-    }
-    .list::-webkit-scrollbar-track {
-      background: #1a1a1a;
-    }
-    .list::-webkit-scrollbar-thumb {
-      background: #3a3a3a;
-      border-radius: 3px;
-    }
-    .list-item {
-      padding: 1rem;
-      background-color: #0f0f0f;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      margin-bottom: 0.75rem;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .list-item:hover {
-      background-color: #1a1a1a;
-      border-color: #3a3a3a;
-    }
-    .list-item.selected {
-      background-color: #1a3a4f;
-      border-color: #00d9ff;
-    }
-    .friend-item {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .friend-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #00d9ff, #0a7ea4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      color: #000;
-    }
-    .friend-name {
-      font-weight: 600;
-      color: #ffffff;
-    }
-    .problem-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .problem-info {
-      flex: 1;
-    }
-    .problem-number {
-      color: #808080;
-      font-size: 0.9rem;
-      margin-bottom: 0.25rem;
-    }
-    .problem-title {
-      font-weight: 600;
-      color: #ffffff;
-      font-size: 0.95rem;
-    }
-    .badge {
-      display: inline-block;
-      padding: 0.35rem 0.75rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .badge-easy {
-      background-color: #1a4d2e;
-      color: #4ade80;
-    }
-    .badge-medium {
-      background-color: #4d3a1a;
-      color: #fbbf24;
-    }
-    .badge-hard {
-      background-color: #4d1a1a;
-      color: #f87171;
-    }
-    .badge-pending {
-      background-color: #4d3a1a;
-      color: #fbbf24;
-    }
-    .badge-completed {
-      background-color: #1e3a5f;
-      color: #60a5fa;
-    }
-    .badge-accepted {
-      background-color: #1a4d2e;
-      color: #4ade80;
-    }
-    .send-section {
-      background: linear-gradient(135deg, #1a1a1a, #252525);
-      border: 1px solid #2a2a2a;
-      border-radius: 16px;
-      padding: 2rem;
-      text-align: center;
-    }
-    .selection-display {
-      display: flex;
-      gap: 2rem;
-      justify-content: center;
-      margin-bottom: 2rem;
-    }
-    .selection-card {
-      flex: 1;
-      max-width: 250px;
-      padding: 1.5rem;
-      background-color: #0f0f0f;
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-    }
-    .selection-label {
-      color: #808080;
-      font-size: 0.85rem;
-      margin-bottom: 0.75rem;
-      text-transform: uppercase;
-    }
-    .selection-value {
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 1.1rem;
-    }
-    .send-btn {
-      padding: 1rem 3rem;
-      background: linear-gradient(135deg, #00d9ff, #0a7ea4);
-      border: none;
-      border-radius: 10px;
-      color: #000;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.3s;
-    }
-    .send-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 217, 255, 0.3);
-    }
-    .send-btn:disabled {
-      background: #2a2a2a;
-      color: #808080;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .challenge-item {
-      padding: 1.5rem;
-      background-color: #0f0f0f;
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      margin-bottom: 1rem;
-    }
-    .challenge-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
-    .challenge-user {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    .user-avatar-small {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #00d9ff, #0a7ea4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #000;
-    }
-    .challenge-problem {
-      font-weight: 600;
-      color: #ffffff;
-      margin-bottom: 0.5rem;
-    }
-    .challenge-meta {
-      display: flex;
-      gap: 1rem;
-      color: #808080;
-      font-size: 0.9rem;
-    }
-    .empty-state {
-      text-align: center;
-      padding: 3rem 2rem;
-      color: #808080;
-    }
-    @media (max-width: 1024px) {
-      .grid-container {
-        grid-template-columns: 1fr;
-      }
-    }
-    @media (max-width: 768px) {
-      .container {
-        padding: 1rem;
-      }
-      .header {
-        padding: 1rem;
-      }
-      .page-title {
-        font-size: 1.5rem;
-      }
-      .tabs {
-        overflow-x: auto;
-      }
-      .tab {
-        padding: 0.75rem 1rem;
-        font-size: 0.9rem;
-      }
-      .selection-display {
-        flex-direction: column;
-        gap: 1rem;
-      }
-      .selection-card {
-        max-width: 100%;
-      }
-    }
-  `;
+  const filteredProblems = leetcodeProblems.filter(p =>
+    p.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const diffClass = (d = 'Easy') => ({ Easy: 'badge-easy', Medium: 'badge-medium', Hard: 'badge-hard' }[d] || 'badge-easy');
+  const statusColor = (s) => ({
+    pending: { bg: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: 'rgba(251,191,36,0.2)' },
+    accepted: { bg: 'rgba(74,222,128,0.1)', color: '#4ade80', border: 'rgba(74,222,128,0.2)' },
+    rejected: { bg: 'rgba(248,113,113,0.1)', color: '#f87171', border: 'rgba(248,113,113,0.2)' },
+  }[s] || { bg: 'rgba(255,255,255,0.05)', color: '#8A8F98', border: 'rgba(255,255,255,0.1)' });
+
+  const tabs = [
+    { key: 'create', label: 'Create' },
+    { key: 'sent', label: `Sent (${sentChallenges.length})` },
+    { key: 'received', label: `Received (${receivedChallenges.length})` },
+  ];
 
   return (
-    <div className="challenge-page">
-      <style>{styles}</style>
+    <div className="min-h-screen relative" style={{ backgroundColor: '#050506', color: '#EDEDEF' }}>
+      {/* Ambient blobs */}
+      <div className="blob-primary" />
+      <div className="blob-secondary" />
+      <div className="noise-overlay" />
+      <div className="grid-overlay" />
 
-      {/* Header */}
-      <div className="header">
-        <div className="header-content">
-          <button className="back-btn" onClick={() => window.history.back()}>
-            <ArrowLeft size={20} />
-          </button>
-          <h1 className="page-title">🏆 Challenges</h1>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container">
-        {/* Tabs */}
-        <div className="tabs">
-          <button 
-            className={`tab ${activeTab === 'create' ? 'active' : ''}`}
-            onClick={() => setActiveTab('create')}
+      <div className="relative z-10">
+        {/* Header */}
+        <nav
+          className="sticky top-0 z-50 flex items-center gap-4 px-4 sm:px-6 py-3"
+          style={{ backgroundColor: 'rgba(5,5,6,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <button
+            className="btn-ghost w-9 h-9 flex items-center justify-center rounded-lg shrink-0"
+            onClick={() => window.history.back()}
           >
-            Create Challenge
+            <ArrowLeft size={17} />
           </button>
-          <button 
-            className={`tab ${activeTab === 'sent' ? 'active' : ''}`}
-            onClick={() => setActiveTab('sent')}
-          >
-            Sent ({displaySent.length})
-          </button>
-          <button 
-            className={`tab ${activeTab === 'received' ? 'active' : ''}`}
-            onClick={() => setActiveTab('received')}
-          >
-            Received ({displayReceived.length})
-          </button>
-        </div>
+          <div className="flex items-center gap-2.5">
+            <Trophy size={18} color="#818cf8" />
+            <h1 className="text-lg font-semibold tracking-tight" style={{ color: '#EDEDEF' }}>Challenges</h1>
+          </div>
+        </nav>
 
-        {/* Create Challenge Tab */}
-        {activeTab === 'create' && (
-          <>
-            <div className="grid-container">
-              {/* Friends List */}
-              <div className="section">
-                <div className="section-header">
-                  <h2 className="section-title">Select Friend</h2>
-                  <span style={{ color: '#808080', fontSize: '0.9rem' }}>{displayFriends.length} friends</span>
-                </div>
-                <div className="list">
-                  {displayFriends.map(friend => (
-                    <div 
-                      key={friend._id}
-                      className={`list-item friend-item ${selectedFriend?.id === friend.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedFriend(friend)}
-                    >
-                      <div className="friend-avatar">{friend.username[0].toUpperCase()}</div>
-                      <div className="friend-name">{friend.username}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
 
-              {/* LeetCode Problems */}
-              <div className="section">
-                <div className="section-header">
-                  <h2 className="section-title">Select Problem</h2>
-                  <span style={{ color: '#808080', fontSize: '0.9rem' }}>{displayProblems.length} problems</span>
-                </div>
-                <div className="search-wrapper">
-                  <Search className="search-icon" size={18} />
-                  <input
-                    type="text"
-                    className="search-box"
-                    placeholder="Search problems..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <div className="list">
-                  {filteredProblems.map(problem => (
-                    <div 
-                      key={problem.id}
-                      className={`list-item problem-item ${selectedProblem?.id === problem.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedProblem(problem)}
-                    >
-                      <div className="problem-info">
-                        <div className="problem-number">#{problem.id}</div>
-                        <div className="problem-title">{problem.title}</div>
-                      </div>
-                      <span className={`badge badge-${problem.difficulty.toLowerCase()}`}>
-                        {problem.difficulty}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Send Challenge Section */}
-            <div className="send-section">
-              <div className="selection-display">
-                <div className="selection-card">
-                  <div className="selection-label">Challenging</div>
-                  <div className="selection-value">
-                    {selectedFriend ? selectedFriend.username : 'Select a friend'}
-                  </div>
-                </div>
-                <div className="selection-card">
-                  <div className="selection-label">Problem</div>
-                  <div className="selection-value">
-                    {selectedProblem ? selectedProblem.title : 'Select a problem'}
-                  </div>
-                </div>
-              </div>
-              <button 
-                className="send-btn"
-                onClick={handleSendChallenge}
-                disabled={!selectedFriend || !selectedProblem}
+          {/* Tabs */}
+          <div className="flex gap-1 mb-8 p-1 rounded-xl w-fit" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            {tabs.map(({ key, label }) => (
+              <button
+                key={key}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                style={activeTab === key
+                  ? { background: 'rgba(94,106,210,0.2)', color: '#818cf8', border: '1px solid rgba(94,106,210,0.3)' }
+                  : { color: '#8A8F98', border: '1px solid transparent' }
+                }
+                onClick={() => setActiveTab(key)}
               >
-                <Send size={20} />
-                Send Challenge
+                {label}
               </button>
+            ))}
+          </div>
+
+          {/* ── Create Tab ── */}
+          {activeTab === 'create' && (
+            <div className="flex flex-col gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* Friends */}
+                <div className="surface-card rounded-2xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-base font-semibold" style={{ color: '#EDEDEF' }}>Select Friend</h2>
+                    <span className="text-xs font-mono" style={{ color: '#8A8F98' }}>{friends.length} friends</span>
+                  </div>
+                  <div className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1">
+                    {friends.map(friend => (
+                      <button
+                        key={friend._id}
+                        className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-150"
+                        style={selectedFriend?._id === friend._id
+                          ? { background: 'rgba(94,106,210,0.15)', border: '1px solid rgba(94,106,210,0.3)' }
+                          : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }
+                        }
+                        onMouseEnter={e => { if (selectedFriend?._id !== friend._id) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                        onMouseLeave={e => { if (selectedFriend?._id !== friend._id) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                        onClick={() => setSelectedFriend(friend)}
+                      >
+                        <div
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
+                          style={{ background: 'linear-gradient(135deg, #5E6AD2, #818cf8)', color: '#fff' }}
+                        >
+                          {friend.username[0].toUpperCase()}
+                        </div>
+                        <span className="text-sm font-medium" style={{ color: '#EDEDEF' }}>{friend.username}</span>
+                      </button>
+                    ))}
+                    {friends.length === 0 && (
+                      <div className="py-10 text-center text-sm" style={{ color: '#8A8F98' }}>No friends yet</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Problems */}
+                <div className="surface-card rounded-2xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-base font-semibold" style={{ color: '#EDEDEF' }}>Select Problem</h2>
+                    <span className="text-xs font-mono" style={{ color: '#8A8F98' }}>{leetcodeProblems.length} problems</span>
+                  </div>
+                  <div className="relative mb-3">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#8A8F98' }} />
+                    <input
+                      type="text"
+                      className="search-input w-full pl-9 pr-4 py-2 text-sm rounded-xl"
+                      placeholder="Search problems…"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                    {filteredProblems.map(problem => (
+                      <button
+                        key={problem.id}
+                        className="flex items-center justify-between p-3 rounded-xl text-left transition-all duration-150"
+                        style={selectedProblem?.id === problem.id
+                          ? { background: 'rgba(94,106,210,0.15)', border: '1px solid rgba(94,106,210,0.3)' }
+                          : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }
+                        }
+                        onMouseEnter={e => { if (selectedProblem?.id !== problem.id) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                        onMouseLeave={e => { if (selectedProblem?.id !== problem.id) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                        onClick={() => setSelectedProblem(problem)}
+                      >
+                        <div className="flex-1 min-w-0 mr-3">
+                          <p className="text-xs font-mono mb-0.5" style={{ color: '#8A8F98' }}>#{problem.id}</p>
+                          <p className="text-sm font-medium truncate" style={{ color: '#EDEDEF' }}>{problem.title}</p>
+                        </div>
+                        <span className={`${diffClass(problem.difficulty)} text-xs px-2.5 py-0.5 rounded-full font-semibold shrink-0`}>
+                          {problem.difficulty}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Send section */}
+              <div
+                className="rounded-2xl p-6"
+                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                  {[
+                    { label: 'Challenging', value: selectedFriend?.username || 'Select a friend' },
+                    { label: 'Problem', value: selectedProblem?.title || 'Select a problem' },
+                  ].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="flex-1 rounded-xl px-4 py-3"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
+                    >
+                      <p className="text-xs font-mono tracking-widest uppercase mb-1.5" style={{ color: '#8A8F98' }}>{label}</p>
+                      <p className="text-sm font-semibold truncate" style={{ color: value.includes('Select') ? '#8A8F98' : '#EDEDEF' }}>{value}</p>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  className="btn-accent flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold mx-auto"
+                  onClick={handleSendChallenge}
+                  disabled={!selectedFriend || !selectedProblem}
+                  style={(!selectedFriend || !selectedProblem) ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                >
+                  <Send size={15} /> Send Challenge
+                </button>
+              </div>
             </div>
-          </>
-        )}
+          )}
 
-        {/* Sent Challenges Tab */}
-        {activeTab === 'sent' && (
-          <div className="section">
-            <h2 className="section-title" style={{ marginBottom: '1.5rem' }}>Challenges You Sent</h2>
-            {displaySent.length === 0 ? (
-              <div className="empty-state">
-                <Trophy size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
-                <div>No challenges sent yet</div>
-              </div>
-            ) : (
-              displaySent.map(challenge => (
-                <div key={challenge._id} className="challenge-item">
-                  <div className="challenge-header">
-                    <div className="challenge-user">
-                      <div className="user-avatar-small">{challenge.participants[1].userId.username[0].toUpperCase()}</div>
-                      <span style={{ color: '#e0e0e0', fontWeight: 600 }}>To: {challenge.participants[1].userId.username}</span>
-                    </div>
-                    <span className={`badge badge-${challenge.status}`}>{challenge.status}</span>
-                  </div>
-                  <div className="challenge-problem">{challenge.title}</div>
-                  <div className="challenge-meta">
-                    <span className={`badge badge-${challenge.difficulty.toLowerCase()}`}>
-                      {challenge.difficulty}
-                    </span>
-                    <span>
-                      <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '0.25rem' }} />
-                      {new Date(challenge.createdAt).toLocaleString()}
-                    </span>
-                  </div>
+          {/* ── Sent Tab ── */}
+          {activeTab === 'sent' && (
+            <div className="surface-card rounded-2xl p-5">
+              <h2 className="text-base font-semibold mb-5" style={{ color: '#EDEDEF' }}>Challenges You Sent</h2>
+              {sentChallenges.length === 0 ? (
+                <div className="flex flex-col items-center py-16 gap-3">
+                  <Trophy size={36} style={{ color: '#8A8F98', opacity: 0.3 }} />
+                  <p className="text-sm" style={{ color: '#8A8F98' }}>No challenges sent yet</p>
                 </div>
-              ))
-            )}
-          </div>
-        )}
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {sentChallenges.map(c => {
+                    const sc = statusColor(c.status);
+                    return (
+                      <div key={c._id} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
+                              style={{ background: 'linear-gradient(135deg, #5E6AD2, #818cf8)', color: '#fff' }}>
+                              {c.participants[1]?.userId?.username?.[0]?.toUpperCase()}
+                            </div>
+                            <span className="text-sm font-medium" style={{ color: '#8A8F98' }}>
+                              To: <span style={{ color: '#EDEDEF' }}>{c.participants[1]?.userId?.username}</span>
+                            </span>
+                          </div>
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
+                            {c.status}
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold mb-2 font-mono" style={{ color: '#EDEDEF' }}>{c.title}</p>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <span className={`${diffClass(c.difficulty)} text-xs px-2.5 py-0.5 rounded-full font-semibold`}>{c.difficulty}</span>
+                          <span className="flex items-center gap-1 text-xs" style={{ color: '#8A8F98' }}>
+                            <Clock size={11} /> {new Date(c.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Received Challenges Tab */}
-        {activeTab === 'received' && (
-          <div className="section">
-            <h2 className="section-title" style={{ marginBottom: '1.5rem' }}>Challenges You Received</h2>
-            {displayReceived.length === 0 ? (
-              <div className="empty-state">
-                <Trophy size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
-                <div>No challenges received yet</div>
-              </div>
-            ) : (
-              displayReceived.map(challenge => (
-                <div key={challenge._id} className="challenge-item">
-                  <div className="challenge-header">
-                    <div className="challenge-user">
-                      <div className="user-avatar-small">{challenge.participants[1].userId.username[0].toUpperCase()}</div>
-                      <span style={{ color: '#e0e0e0', fontWeight: 600 }}>From: {challenge.participants[0].userId.username}</span>
-                    </div>
-                    <span className={`badge badge-${challenge.status}`}>{challenge.status}</span>
-                  </div>
-                  <div className="challenge-problem">{challenge.title}</div>
-                  <div className="challenge-meta">
-                    <span className={`badge badge-${challenge.difficulty.toLowerCase()}`}>
-                      {challenge.difficulty}
-                    </span>
-                    <span>
-                      <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '0.25rem' }} />
-                      {challenge.receivedAt || "Invalid"}
-                    </span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <a href={`https://leetcode.com/problems/${toKebabCase(challenge?.title)}`} className='bg-blue-500 p-2 my-5'>
-                      Redirect
-                    </a>
-                      <button onClick={()=>{handleVerify(challenge?.title)}} className='bg-blue-500 p-2 my-5'>
-                      Verify
-                    </button>
-                    </div>
+          {/* ── Received Tab ── */}
+          {activeTab === 'received' && (
+            <div className="surface-card rounded-2xl p-5">
+              <h2 className="text-base font-semibold mb-5" style={{ color: '#EDEDEF' }}>Challenges You Received</h2>
+              {receivedChallenges.length === 0 ? (
+                <div className="flex flex-col items-center py-16 gap-3">
+                  <Trophy size={36} style={{ color: '#8A8F98', opacity: 0.3 }} />
+                  <p className="text-sm" style={{ color: '#8A8F98' }}>No challenges received yet</p>
                 </div>
-              ))
-            )}
-          </div>
-        )}
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {receivedChallenges.map(c => {
+                    const sc = statusColor(c.status);
+                    return (
+                      <div key={c._id} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
+                              style={{ background: 'linear-gradient(135deg, #5E6AD2, #818cf8)', color: '#fff' }}>
+                              {c.participants[1]?.userId?.username?.[0]?.toUpperCase()}
+                            </div>
+                            <span className="text-sm font-medium" style={{ color: '#8A8F98' }}>
+                              From: <span style={{ color: '#EDEDEF' }}>{c.participants[0]?.userId?.username}</span>
+                            </span>
+                          </div>
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
+                            {c.status}
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold mb-2 font-mono" style={{ color: '#EDEDEF' }}>{c.title}</p>
+                        <div className="flex items-center gap-3 flex-wrap mb-3">
+                          <span className={`${diffClass(c.difficulty)} text-xs px-2.5 py-0.5 rounded-full font-semibold`}>{c.difficulty}</span>
+                          <span className="flex items-center gap-1 text-xs" style={{ color: '#8A8F98' }}>
+                            <Clock size={11} /> {c.receivedAt || 'Unknown'}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <a
+                            href={`https://leetcode.com/problems/${toSlug(c.title)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150"
+                            style={{ background: 'rgba(94,106,210,0.12)', color: '#818cf8', border: '1px solid rgba(94,106,210,0.2)', textDecoration: 'none' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(94,106,210,0.2)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(94,106,210,0.12)'}
+                          >
+                            <ExternalLink size={12} /> Open
+                          </a>
+                          <button
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150"
+                            style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(74,222,128,0.18)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(74,222,128,0.1)'}
+                            onClick={() => handleVerify(c.title)}
+                          >
+                            <ShieldCheck size={12} /> Verify
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
