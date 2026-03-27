@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const {getFreinds, getProblems, sendChallenge, respondChallenge, getchallengeSent,getchallengeReceived, verifyChallenge} = require("../controllers/challengeController");
+const {getFreinds, getProblems, sendChallenge, respondChallenge,getHomeChallenges, getchallengeSent,getchallengeReceived, verifyChallenge, updateStatus} = require("../controllers/challengeController");
 const { auth } = require("../middleware/auth");
 
 
@@ -12,5 +12,6 @@ router.post("/respond",auth,respondChallenge);
 router.get("/sent",auth,getchallengeSent);
 router.get("/received",auth,getchallengeReceived);
 router.get("/submissions",auth,verifyChallenge);
-router.post("/updateStatus",auth,updateStatus);
+router.get("/home-challenges", auth, getHomeChallenges);
+router.patch('/updateStatus/:challengeId', auth, updateStatus);
 module.exports = router;

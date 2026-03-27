@@ -6,7 +6,7 @@ import Home from "./components/Home";
 import ChallengePage from "./components/Challenge";
 import JoinRoom from "./components/JoinRoom"
 import CreateRoom from "./components/CreateRoom";
-import Room from "./components/Room";
+import RoomPage from './components/RoomPage';
 
 
 function App() {
@@ -20,7 +20,8 @@ function App() {
         <Route path="/challenge" element={<ChallengePage />} />
         <Route path="/join-room" element={<JoinRoom/>}/>
         <Route path="/create-room" element={<CreateRoom/>} />
-        <Route path="/room:roomid" element={<Room/>}/>
+        <Route path="/room/:roomId" element={<RoomPage />} />
+
       </Routes>
 
     </BrowserRouter>

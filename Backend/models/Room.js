@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-
 const roomSchema = new mongoose.Schema(
   {
     roomId: {
@@ -14,14 +13,17 @@ const roomSchema = new mongoose.Schema(
       default: "Untitled Room",
     },
 
-    // Owner of the room
+    password: {
+      type: String,
+      default: null,
+    },
+
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    // All participants
     members: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -29,13 +31,11 @@ const roomSchema = new mongoose.Schema(
       },
     ],
 
-    
     code: {
       type: String,
       default: "",
     },
 
-  
     language: {
       type: String,
       default: "javascript",
@@ -64,7 +64,5 @@ const roomSchema = new mongoose.Schema(
   }
 );
 
-
 const Room = mongoose.model("Room", roomSchema);
-
 module.exports = Room;

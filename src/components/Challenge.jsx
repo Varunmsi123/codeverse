@@ -38,7 +38,7 @@ export default function ChallengePage() {
 
   const toSlug = str => str.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
 
-  const handleVerify = async (name) => {
+  const handleVerify = async (name, challengeId) => {
     try {
       const token = localStorage.getItem('token');
       const challengeSlug = toSlug(name);
@@ -50,6 +50,15 @@ export default function ChallengePage() {
       const solved = submissions.some(sub =>
         sub.status === 10 && (sub.titleSlug.includes(challengeSlug) || challengeSlug.includes(sub.titleSlug))
       );
+
+      if (solved) {
+        await fetch(`http://localhost:5000/challenge/updateStatus/${challengeId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ status: 'solved' }),
+        });
+      }
+
       alert(solved ? '✅ Challenge solved!' : '❌ Not solved yet');
       return solved;
     } catch (error) { console.log('Verify error:', error); return false; }
@@ -281,7 +290,7 @@ export default function ChallengePage() {
                         <div className="flex items-center gap-3 flex-wrap">
                           <span className={`${diffClass(c.difficulty)} text-xs px-2.5 py-0.5 rounded-full font-semibold`}>{c.difficulty}</span>
                           <span className="flex items-center gap-1 text-xs" style={{ color: '#8A8F98' }}>
-                            <Clock size={11} /> {new Date(c.createdAt).toLocaleString()}
+                            <Clock size={12} /> {new Date(c.startTime).toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -345,7 +354,7 @@ export default function ChallengePage() {
                             style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}
                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(74,222,128,0.18)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'rgba(74,222,128,0.1)'}
-                            onClick={() => handleVerify(c.title)}
+                            onClick={() => handleVerify(c.title,c._id)}
                           >
                             <ShieldCheck size={12} /> Verify
                           </button>

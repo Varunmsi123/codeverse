@@ -292,8 +292,76 @@ try {
   }
 }
 
+exports.updateStatus = async (req, res) => {
+  try {
+    const { challengeId } = req.params;
 
-exports.updateStaus=async()
+    const challenge = await Challenge.findByIdAndUpdate(
+      challengeId,
+      { status: "solved" },
+      { new: true }
+    );
+
+    console.log("Hona to chahiye");
+
+    if (!challenge) {
+      return res.status(404).json({ success: false, message: "Challenge not found" });
+    }
+
+    return res.status(200).json({ success: true, challenge });
+
+  } catch (error) {
+    console.log("Update Status Error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+exports.getHomeChallenges = async (req, res) => {
+  try {
+    const userId = req.user;
+
+    const user = await UserCodeverse.findById(userId)
+      .select("challengesReceived")
+      .populate({
+        path: "challengesReceived",
+        model: "Challenge",
+        populate: {
+          path: "participants.userId",
+          model: "UserCodeverse",
+          select: "username avatar",
+        },
+      });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Only return challenges where receiver (participants[1]) status is not cancelled
+    const challenges = user.challengesReceived.map((challenge) => ({
+      _id: challenge._id,
+      title: challenge.title,
+      difficulty: challenge.difficulty,
+      status: challenge.status,
+      createdAt: challenge.createdAt,
+      sentBy: challenge.participants[0]?.userId?.username, // sender
+    }));
+
+    return res.status(200).json({
+      success: true,
+      challenges,
+    });
+
+  } catch (err) {
+    console.log("Error in getHomeChallenges:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
 
 
 

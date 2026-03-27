@@ -19,33 +19,53 @@ export default function Home() {
   const [showLeetVerificationCard, setShowLeetVerificationCard] = useState(false);
   const [verificationCode, setVerificationCode] = useState(null);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [myRooms, setMyRooms] = useState([]);
+  const [myChallenges, setMyChallenges] = useState([]);
   const navigate = useNavigate();
 
-  const myRooms = [
-    { id: 1, name: 'Tech Wizards',      members: 8,  lastActive: '2 hours ago' },
-    { id: 2, name: 'Code Masters',      members: 5,  lastActive: '1 day ago' },
-    { id: 3, name: 'Gaming Squad',      members: 12, lastActive: '3 hours ago' },
-    { id: 4, name: 'Algorithm Masters', members: 15, lastActive: '5 hours ago' },
-    { id: 5, name: 'Web Dev Warriors',  members: 9,  lastActive: '1 day ago' },
-  ];
-  const myChallenges = [
-    { id: 1, title: 'Two Sum',                             friend: 'Alex',  difficulty: 'Easy',   status: 'Pending' },
-    { id: 2, title: 'Longest Substring Without Repeating', friend: 'Sarah', difficulty: 'Medium', status: 'Completed' },
-    { id: 3, title: 'Binary Tree Level Order Traversal',   friend: 'Mike',  difficulty: 'Medium', status: 'Pending' },
-    { id: 4, title: 'Merge K Sorted Lists',                friend: 'Emma',  difficulty: 'Hard',   status: 'Pending' },
-    { id: 5, title: 'Valid Parentheses',                   friend: 'John',  difficulty: 'Easy',   status: 'Completed' },
-  ];
+  useEffect(() => {
+    const fetchMyRooms = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:5000/room/my-rooms', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) setMyRooms(data.rooms);
+      } catch (err) {
+        console.log('Fetch my rooms error:', err);
+      }
+    };
 
-  const displayedRooms      = showAllRooms      ? myRooms      : myRooms.slice(0, 2);
+    fetchMyRooms();
+  }, []);
+
+ useEffect(() => {
+  const fetchChallenges = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/challenge/home-challenges', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) setMyChallenges(data.challenges);
+    } catch (err) {
+      console.log('Fetch challenges error:', err);
+    }
+  };
+  fetchChallenges();
+}, []);
+
+  const displayedRooms = showAllRooms ? myRooms : myRooms.slice(0, 2);
   const displayedChallenges = showAllChallenges ? myChallenges : myChallenges.slice(0, 2);
-  const activeRoomsCount       = myRooms.length;
+  const activeRoomsCount = myRooms.length;
   const pendingChallengesCount = myChallenges.filter(c => c.status === 'Pending').length;
 
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res   = await fetch('http://localhost:5000/auth/me', { headers: { Authorization: `Bearer ${token}` } });
-      const data  = await res.json();
+      const res = await fetch('http://localhost:5000/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
       if (res.ok) setUser(data.user);
       else alert('Session expired. Please login again.');
     } catch (e) { console.log('Profile Error:', e); }
@@ -56,8 +76,8 @@ export default function Home() {
     if (!query.trim()) { setRealUsers([]); return; }
     try {
       const token = localStorage.getItem('token');
-      const res   = await fetch(`http://localhost:5000/users/search?username=${query}`, { headers: { Authorization: `Bearer ${token}` } });
-      const data  = await res.json();
+      const res = await fetch(`http://localhost:5000/users/search?username=${query}`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
       if (data.success) setRealUsers(data.users);
     } catch (e) { console.log('Search Error:', e); }
   };
@@ -65,17 +85,17 @@ export default function Home() {
   const fetchOtherUserProfile = async (userId) => {
     try {
       const token = localStorage.getItem('token');
-      const res   = await fetch(`http://localhost:5000/users/profile/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
-      const data  = await res.json();
+      const res = await fetch(`http://localhost:5000/users/profile/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
       if (data.success) { setSelectedUser(data.user); setShowProfileCard(true); }
     } catch (e) { console.log('Error fetching user:', e); }
   };
 
   const handleLeetCodeVerification = async () => {
     try {
-      const token  = localStorage.getItem('token');
+      const token = localStorage.getItem('token');
       const UserID = localStorage.getItem('userID');
-      const res    = await fetch('http://localhost:5000/users/leetVerification', {
+      const res = await fetch('http://localhost:5000/users/leetVerification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ userId: UserID }),
@@ -87,12 +107,12 @@ export default function Home() {
   };
 
   const handleLeetVerification = () => { setSelectedUser(localStorage.getItem('userID')); handleLeetCodeVerification(); setShowLeetVerificationCard(true); setShowProfileDropdown(false); };
-  const handleLogout           = () => { localStorage.removeItem('token'); window.location.href = '/login'; };
-  const handleViewProfile      = () => { setShowProfileDropdown(false); setSelectedUser(user); setShowProfileCard(true); };
-  const handleSuggestionClick  = (uid) => { setSearchQuery(''); setRealUsers([]); setMobileSearchOpen(false); fetchOtherUserProfile(uid); };
-  const closeProfile           = () => { setShowProfileCard(false); setSelectedUser(null); };
-  const closeNotifications     = () => setShowNotifications(false);
-  const closeLeetVerification  = () => { setShowLeetVerificationCard(false); setSelectedUser(null); };
+  const handleLogout = () => { localStorage.removeItem('token'); window.location.href = '/login'; };
+  const handleViewProfile = () => { setShowProfileDropdown(false); setSelectedUser(user); setShowProfileCard(true); };
+  const handleSuggestionClick = (uid) => { setSearchQuery(''); setRealUsers([]); setMobileSearchOpen(false); fetchOtherUserProfile(uid); };
+  const closeProfile = () => { setShowProfileCard(false); setSelectedUser(null); };
+  const closeNotifications = () => setShowNotifications(false);
+  const closeLeetVerification = () => { setShowLeetVerificationCard(false); setSelectedUser(null); };
 
   useEffect(() => { fetchProfile(); }, []);
   useEffect(() => {
@@ -103,9 +123,9 @@ export default function Home() {
 
   // Badge color via CSS var tokens
   const diffStyle = (d) => ({
-    Easy:   { background: 'rgba(74,222,128,0.10)',  color: 'var(--success)' },
-    Medium: { background: 'rgba(251,191,36,0.10)',  color: 'var(--warning)' },
-    Hard:   { background: 'rgba(248,113,113,0.10)', color: 'var(--danger)'  },
+    Easy: { background: 'rgba(74,222,128,0.10)', color: 'var(--success)' },
+    Medium: { background: 'rgba(251,191,36,0.10)', color: 'var(--warning)' },
+    Hard: { background: 'rgba(248,113,113,0.10)', color: 'var(--danger)' },
   }[d] || { background: 'rgba(74,222,128,0.10)', color: 'var(--success)' });
 
   const statusStyle = (s) => s === 'Completed'
@@ -152,9 +172,9 @@ export default function Home() {
       <div className="noise-overlay" /><div className="grid-overlay" />
 
       {/* Modals at root — always full-screen centered */}
-      {showProfileCard      && selectedUser && <UserProfile user={user} onClose={closeProfile} ReceiverID={selectedUser} />}
-      {showLeetVerificationCard              && <LeetCodeVerification onClose={closeLeetVerification} verificationCode={verificationCode} userId={selectedUser} />}
-      {showNotifications                     && <Notifications onClose={closeNotifications} />}
+      {showProfileCard && selectedUser && <UserProfile user={user} onClose={closeProfile} ReceiverID={selectedUser} />}
+      {showLeetVerificationCard && <LeetCodeVerification onClose={closeLeetVerification} verificationCode={verificationCode} userId={selectedUser} />}
+      {showNotifications && <Notifications onClose={closeNotifications} />}
 
       <div className="relative z-10">
         {/* ═══ NAVBAR ═══ */}
@@ -190,7 +210,7 @@ export default function Home() {
                   color: 'var(--fg)',
                 }}
                 onFocus={e => { e.target.style.borderColor = 'var(--border-accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-dim)'; }}
-                onBlur={e  => { e.target.style.borderColor = 'var(--border)';        e.target.style.boxShadow = 'none'; }}
+                onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
                 placeholder="Search users…"
                 value={searchQuery}
                 onChange={e => { setSearchQuery(e.target.value); searchUsers(e.target.value); }}
@@ -240,14 +260,14 @@ export default function Home() {
                       <p className="text-xs mt-0.5" style={{ color: 'var(--fg-muted)' }}>Signed in</p>
                     </div>
                     {[
-                      { icon: User,        label: 'View Profile',    action: handleViewProfile },
+                      { icon: User, label: 'View Profile', action: handleViewProfile },
                       { icon: ShieldCheck, label: 'Verify LeetCode', action: handleLeetVerification },
                     ].map(({ icon: Icon, label, action }) => (
                       <button key={label}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-all duration-150"
                         style={{ color: 'var(--fg-muted)' }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--fg)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent';          e.currentTarget.style.color = 'var(--fg-muted)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--fg-muted)'; }}
                         onClick={action}>
                         <Icon size={14} /> {label}
                       </button>
@@ -275,7 +295,7 @@ export default function Home() {
                 className="w-full pl-9 pr-4 py-2 text-sm rounded-xl focus:outline-none transition-all"
                 style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--fg)' }}
                 onFocus={e => { e.target.style.borderColor = 'var(--border-accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-dim)'; }}
-                onBlur={e  => { e.target.style.borderColor = 'var(--border)';        e.target.style.boxShadow = 'none'; }}
+                onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
                 placeholder="Search users…"
                 value={searchQuery}
                 onChange={e => { setSearchQuery(e.target.value); searchUsers(e.target.value); }}
@@ -306,15 +326,15 @@ export default function Home() {
           {/* Stats strip */}
           <section className="grid grid-cols-3 gap-2 sm:gap-4 mb-10 sm:mb-14 animate-fade-up delay-1">
             {[
-              { label: 'Active Rooms', value: activeRoomsCount,       tokenColor: 'var(--info)' },
-              { label: 'Challenges',   value: myChallenges.length,    tokenColor: 'var(--warning)' },
-              { label: 'Pending',      value: pendingChallengesCount, tokenColor: 'var(--danger)' },
+              { label: 'Active Rooms', value: activeRoomsCount, tokenColor: 'var(--info)' },
+              { label: 'Challenges', value: myChallenges.length, tokenColor: 'var(--warning)' },
+              { label: 'Pending', value: pendingChallengesCount, tokenColor: 'var(--danger)' },
             ].map(({ label, value, tokenColor }) => (
               <div key={label}
                 className="rounded-2xl px-3 sm:px-5 py-4 sm:py-5 text-center transition-all duration-300 hover:-translate-y-1"
                 style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-hover)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)';       e.currentTarget.style.boxShadow = 'none'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
               >
                 <p className="text-2xl sm:text-3xl font-bold tracking-tight mb-1" style={{ color: tokenColor }}>{value}</p>
                 <p className="text-xs font-mono" style={{ color: 'var(--fg-muted)' }}>{label}</p>
@@ -325,15 +345,15 @@ export default function Home() {
           {/* Action Cards */}
           <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-12 sm:mb-16">
             {[
-              { icon: Zap,   title: 'Start a Challenge', desc: 'Compete with others on LeetCode', route: '/challenge',   delay: 'delay-1', iconColor: 'var(--info)',        bg: 'var(--accent-dim)',          border: 'var(--border-accent)' },
-              { icon: Users, title: 'Join a Room',       desc: 'Enter an existing room with a code', route: '/join-room', delay: 'delay-2', iconColor: 'var(--cv-accent-v)', bg: 'rgba(120,80,200,0.14)',     border: 'rgba(120,80,200,0.25)' },
-              { icon: Plus,  title: 'Create Room',       desc: 'Host a new room for your friends',   route: '/create-room',delay: 'delay-3', iconColor: 'var(--cv-accent-b)', bg: 'rgba(60,100,210,0.14)',     border: 'rgba(60,100,210,0.25)' },
+              { icon: Zap, title: 'Start a Challenge', desc: 'Compete with others on LeetCode', route: '/challenge', delay: 'delay-1', iconColor: 'var(--info)', bg: 'var(--accent-dim)', border: 'var(--border-accent)' },
+              { icon: Users, title: 'Join a Room', desc: 'Enter an existing room with a code', route: '/join-room', delay: 'delay-2', iconColor: 'var(--cv-accent-v)', bg: 'rgba(120,80,200,0.14)', border: 'rgba(120,80,200,0.25)' },
+              { icon: Plus, title: 'Create Room', desc: 'Host a new room for your friends', route: '/create-room', delay: 'delay-3', iconColor: 'var(--cv-accent-b)', bg: 'rgba(60,100,210,0.14)', border: 'rgba(60,100,210,0.25)' },
             ].map(({ icon: Icon, title, desc, route, delay, iconColor, bg, border }) => (
               <button key={title}
                 className={`group text-left p-5 sm:p-6 w-full rounded-2xl transition-all duration-300 hover:-translate-y-1.5 animate-fade-up ${delay}`}
                 style={{ background: 'var(--surface)', border: `1px solid var(--border)` }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-accent)'; e.currentTarget.style.boxShadow = '0 0 0 1px var(--border-accent), 0 8px 40px rgba(0,0,0,0.5), 0 0 80px var(--accent-dim)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)';        e.currentTarget.style.boxShadow = 'none'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
                 onClick={() => navigate(route)}
               >
                 <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-4 sm:mb-5 transition-transform duration-200 group-hover:scale-110"
@@ -366,27 +386,31 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-2.5 sm:gap-3">
                 {displayedRooms.map((room, i) => (
-                  <div key={room.id}
+                  <div key={room.roomId}  // ← room.id → room.roomId
                     className="px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
                     style={{ background: 'var(--surface)', border: '1px solid var(--border)', animationDelay: `${0.08 * i}s` }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)';       e.currentTarget.style.borderColor = 'var(--border)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
                   >
                     <div className="flex items-start justify-between mb-2.5">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
                           style={{ background: 'var(--accent-dim)', color: 'var(--info)', border: '1px solid var(--border-accent)' }}>
-                          {room.name[0]}
+                          {room.roomName?.[0]?.toUpperCase()}  {/* ← room.name[0] → room.roomName?.[0] */}
                         </div>
-                        <h4 className="text-sm font-semibold tracking-tight truncate font-mono" style={{ color: 'var(--fg)' }}>{room.name}</h4>
+                        <h4 className="text-sm font-semibold tracking-tight truncate font-mono" style={{ color: 'var(--fg)' }}>
+                          {room.roomName}  {/* ← room.name → room.roomName */}
+                        </h4>
                       </div>
                       <span className="flex items-center gap-1.5 text-xs shrink-0 ml-2" style={{ color: 'var(--success)' }}>
                         <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse inline-block" /> live
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--fg-muted)' }}>
-                      <span className="flex items-center gap-1.5"><Users size={11} /> {room.members} members</span>
-                      <span>{room.lastActive}</span>
+                      <span className="flex items-center gap-1.5">
+                        <Users size={11} /> {room.members?.length} members  {/* ← room.members → room.members?.length */}
+                      </span>
+                      <span>{new Date(room.updatedAt).toLocaleString()}</span>  {/* ← room.lastActive → room.updatedAt */}
                     </div>
                   </div>
                 ))}
@@ -396,7 +420,7 @@ export default function Home() {
                   className="w-full mt-3 py-2.5 text-sm flex items-center justify-center gap-1.5 rounded-xl transition-all duration-200"
                   style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--fg-muted)' }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--fg)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)';       e.currentTarget.style.color = 'var(--fg-muted)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--fg-muted)'; }}
                   onClick={() => setShowAllRooms(v => !v)}>
                   {showAllRooms ? <><ChevronUp size={14} /> Show Less</> : <><ChevronDown size={14} /> {myRooms.length - 2} more rooms</>}
                 </button>
@@ -417,11 +441,11 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-2.5 sm:gap-3">
                 {displayedChallenges.map((c, i) => (
-                  <div key={c.id}
+                  <div key={c._id}  // ← c.id → c._id
                     className="px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
                     style={{ background: 'var(--surface)', border: '1px solid var(--border)', animationDelay: `${0.08 * i}s` }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)';       e.currentTarget.style.borderColor = 'var(--border)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
                   >
                     <div className="flex items-start justify-between mb-2.5">
                       <h4 className="text-sm font-semibold tracking-tight pr-3 leading-snug font-mono" style={{ color: 'var(--fg)' }}>{c.title}</h4>
@@ -430,7 +454,7 @@ export default function Home() {
                     <div className="flex items-center justify-between text-xs" style={{ color: 'var(--fg-muted)' }}>
                       <span className="flex items-center gap-1.5">
                         <span className="w-4 h-4 rounded-md flex items-center justify-center" style={{ background: 'var(--surface-hover)' }}><User size={9} /></span>
-                        {c.friend}
+                        {c.sentBy}  {/* ← c.friend → c.sentBy */}
                       </span>
                       <span className="text-xs font-medium px-2.5 py-0.5 rounded-full" style={statusStyle(c.status)}>{c.status}</span>
                     </div>
@@ -442,7 +466,7 @@ export default function Home() {
                   className="w-full mt-3 py-2.5 text-sm flex items-center justify-center gap-1.5 rounded-xl transition-all duration-200"
                   style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--fg-muted)' }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--fg)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)';       e.currentTarget.style.color = 'var(--fg-muted)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--fg-muted)'; }}
                   onClick={() => setShowAllChallenges(v => !v)}>
                   {showAllChallenges ? <><ChevronUp size={14} /> Show Less</> : <><ChevronDown size={14} /> {myChallenges.length - 2} more challenges</>}
                 </button>

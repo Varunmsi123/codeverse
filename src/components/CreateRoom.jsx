@@ -3,54 +3,54 @@ import { useNavigate } from "react-router-dom";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const CreateRoom = () => {
+  const [roomName, setRoomName] = useState(''); // ← add this
   const [password, setPassword] = useState('');
   const [language, setLanguage] = useState('java');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!password || !language) {
-    alert("Please enter both language and password.");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const token = localStorage.getItem("token"); // JWT
-
-    const res = await fetch("http://localhost:5000/room/createroom", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // 🔑 IMPORTANT
-      },
-      body: JSON.stringify({
-        password,
-        language,
-      }),
-    });
-
-    if (!res.success) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Failed to create room");
+    if (!roomName || !password || !language) {
+      alert("Please fill in all fields.");
+      return;
     }
 
-    const data = await res.json();
+    setLoading(true);
 
-    alert("Room created! Redirecting...");
+    try {
+      const token = localStorage.getItem("token");
 
-    navigate(`/room/${data.roomId}?lang=${language}`);
+      const res = await fetch("http://localhost:5000/room/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          roomName,  // ← add this
+          password,
+          language,
+        }),
+      });
 
-  } catch (err) {
-    console.error("Create room error:", err.message);
-    alert(err.message || "Something went wrong. Try again.");
-    setLoading(false);
-  }
-};
+      const data = await res.json();
 
+      if (!data.success) {
+        throw new Error(data.error || "Something went wrong");
+      }
+
+      alert("Room created! Redirecting...");
+      navigate(`/room/${data.roomId}?lang=${language}`);
+
+    } catch (err) {
+      console.error("Create room error:", err.message);
+      alert(err.message || "Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="container">
@@ -61,6 +61,21 @@ const handleSubmit = async (e) => {
               <h2 className="card-title text-center mb-4">Create a Room</h2>
 
               <form onSubmit={handleSubmit}>
+
+                {/* ← add this field */}
+                <div className="mb-3">
+                  <label className="form-label">Room Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={roomName}
+                    onChange={(e) => setRoomName(e.target.value)}
+                    placeholder="Enter room name"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
                 <div className="mb-3">
                   <label className="form-label">Room Password</label>
                   <input
@@ -92,7 +107,7 @@ const handleSubmit = async (e) => {
                   </select>
                 </div>
 
-                <button className="btn btn-primary w-100" disabled={loading}>
+                <button type="submit" className="btn btn-primary w-100" disabled={loading}>
                   {loading ? "Creating Room..." : "Create Room"}
                 </button>
               </form>
