@@ -1,23 +1,26 @@
 import React, { useState } from "react";
+import { Code, Eye, EyeOff, User, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { API_URL } from '../config';
 
 const Register = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();  // Prevent page reload
+    e.preventDefault();
 
-    console.log("Register:", { username, email, password });
-
-    // Basic validation
     if (!username || !email || !password) {
       alert("Please fill all fields");
       return;
     }
 
+    setLoading(true);
+
     try {
-      const response = await fetch("http://localhost:5000/auth/register", {
+      const response = await fetch("${API_URL}/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -32,193 +35,209 @@ const Register = () => {
         return;
       }
 
-      alert("Registration successful!");
-
-      // OPTIONAL → Save token (if backend sends)
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
-
-      // OPTIONAL → Redirect
-      // window.location.href = "/login";
+      alert("Registration successful! Redirecting to login...");
+      window.location.href = "/";
 
     } catch (error) {
       console.error("Registration Error:", error);
       alert("Something went wrong!");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <link 
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
-        rel="stylesheet"
-      />
-      
-      <style>{`
-        .particle {
-          display: none;
-        }
+    <div className="min-h-screen w-full bg-black flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Ambient blobs */}
+      <div className="blob-primary" />
+      <div className="blob-secondary" />
+      <div className="blob-tertiary" />
+      <div className="noise-overlay" />
+      <div className="grid-overlay" />
 
-        .auth-bg {
-          background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2d2d2d 100%);
-          position: relative;
-          overflow: hidden;
-          min-height: 100vh;
-          min-width:100vw;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 0;
-        }
+      {/* Decorative floating particles */}
+      {[...Array(12)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full pointer-events-none opacity-20"
+          style={{
+            width: `${Math.random() * 6 + 2}px`,
+            height: `${Math.random() * 6 + 2}px`,
+            background: 'var(--info)',
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            boxShadow: '0 0 8px var(--info)',
+          }}
+        />
+      ))}
 
-        .auth-card {
-          background-color: rgba(0, 0, 0, 0.85) !important;
-          backdrop-filter: blur(10px);
-          border: 2px solid #4a5568 !important;
-          border-radius: 20px !important;
-          max-width: 100%;
-          width: 25%;
-          position: relative;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        .auth-card::before {
-          display: none;
-        }
-
-        .auth-card h3 {
-          background: linear-gradient(135deg, #718096 0%, #a0aec0 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .auth-card h3 span {
-          display: inline-block;
-        }
-
-        .form-label {
-          color: #a0aec0 !important;
-          font-weight: 600;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-          font-size: 14px;
-        }
-
-        .form-control {
-          background-color: rgba(26, 32, 44, 0.6) !important;
-          border: 2px solid #4a5568 !important;
-          color: #ffffff !important;
-          border-radius: 10px !important;
-          padding: 14px 18px;
-          transition: all 0.3s ease;
-          box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .form-control:focus {
-          background-color: rgba(45, 55, 72, 0.7) !important;
-          border-color: #718096 !important;
-          box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-          color: #ffffff !important;
-        }
-
-        .auth-btn {
-          background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
-          border: none !important;
-          color: #ffffff !important;
-          font-weight: bold;
-          padding: 16px;
-          border-radius: 10px !important;
-          font-size: 18px;
-          transition: all 0.3s ease;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-
-        .auth-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5) !important;
-        }
-
-        .auth-btn:active {
-          transform: translateY(0px);
-        }
-
-        .auth-card p {
-          color: #ffffff;
-        }
-
-        .auth-card a {
-          color: #a0aec0;
-          text-decoration: none;
-          font-weight: 600;
-          transition: all 0.3s ease;
-        }
-
-        .auth-card a:hover {
-          color: #cbd5e0;
-        }
-      `}</style>
-
-      <div className="auth-bg">
-        {[...Array(20)].map((_, i) => (
+      <div className="relative z-10 w-full max-w-sm animate-fade-up">
+        {/* Brand */}
+        <div className="flex items-center justify-center gap-2.5 mb-8">
           <div
-            key={i}
-            className="particle"
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
             style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${3 + Math.random() * 4}s`
+              background: 'linear-gradient(135deg, rgba(94,106,210,0.3), rgba(94,106,210,0.1))',
+              border: '1px solid rgba(94,106,210,0.35)',
+              boxShadow: '0 0 24px rgba(94,106,210,0.25)',
             }}
-          />
-        ))}
+          >
+            <Code size={20} color="#818cf8" />
+          </div>
+          <span className="text-xl font-semibold tracking-tight" style={{ color: '#EDEDEF' }}>
+            Code<span style={{ color: '#818cf8' }}>Verse</span>
+          </span>
+        </div>
 
-        <div className="card shadow-lg p-4 auth-card" style={{ margin: '0 auto' }}>
-          <h3 className="text-center mb-3 fw-bold">Create Account <span>✨</span></h3>
-
-          <div onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label">Username</label>
-              <input
-                type="text"
-                className="form-control"
-                required
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">Email</label>
-              <input
-                type="email"
-                className="form-control"
-                required
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                required
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-
-            <button onClick={handleSubmit} className="btn btn-success w-100 mt-2 auth-btn">
-              Register
-            </button>
+        {/* Card */}
+        <div
+          className="rounded-2xl p-7 sm:p-8"
+          style={{
+            background: 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 24px 64px rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold tracking-tight mb-1" style={{ color: '#EDEDEF' }}>
+              Create Account ✨
+            </h1>
+            <p className="text-sm" style={{ color: '#8A8F98' }}>Join CodeVerse and invite your friends</p>
           </div>
 
-          <p className="text-center mt-3">
-            Already have an account? <a href="/">Login</a>
-          </p>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {/* Username */}
+            <div>
+              <label className="block text-xs font-mono tracking-widest uppercase mb-2" style={{ color: '#8A8F98' }}>
+                Username
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl text-white focus:outline-none transition-all duration-200"
+                  style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--border-accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-dim)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
+                  placeholder="john_doe"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+                <User size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#8A8F98' }} />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-xs font-mono tracking-widest uppercase mb-2" style={{ color: '#8A8F98' }}>
+                Email
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl text-white focus:outline-none transition-all duration-200"
+                  style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--border-accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-dim)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+                <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#8A8F98' }} />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-xs font-mono tracking-widest uppercase mb-2" style={{ color: '#8A8F98' }}>
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="w-full pl-10 pr-11 py-2.5 text-sm rounded-xl text-white focus:outline-none transition-all duration-200"
+                  style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--border-accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-dim)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+                <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#8A8F98' }} />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-150 cursor-pointer border-0 bg-transparent"
+                  style={{ color: '#8A8F98' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#EDEDEF'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#8A8F98'}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 mt-2 text-white border-0 cursor-pointer transition-all duration-200"
+              style={{
+                background: 'linear-gradient(135deg, var(--accent), var(--info))',
+                boxShadow: '0 4px 16px var(--accent-glow)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px var(--accent-glow)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0px)'; e.currentTarget.style.boxShadow = '0 4px 16px var(--accent-glow)'; }}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Creating Account…
+                </>
+              ) : (
+                <> Sign Up <ArrowRight size={15} /> </>
+              )}
+            </button>
+          </form>
+
+          {/* Divider and Redirect */}
+          <div className="mt-6 pt-6 text-center border-t border-solid" style={{ borderColor: 'var(--border)' }}>
+            <p className="text-sm" style={{ color: '#8A8F98' }}>
+              Already have an account?{' '}
+              <a
+                href="/"
+                className="font-semibold transition-colors duration-150"
+                style={{ color: '#818cf8' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#a5b4fc'}
+                onMouseLeave={e => e.currentTarget.style.color = '#818cf8'}
+              >
+                Login
+              </a>
+            </p>
+          </div>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs mt-6 font-mono" style={{ color: 'var(--fg-subtle)' }}>
+          CodeVerse · Competitive Coding
+        </p>
       </div>
-    </>
+    </div>
   );
 };
 

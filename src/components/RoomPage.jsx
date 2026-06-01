@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import CollaborativeEditor from './CollaborativeEditor';
 import { Copy, Play, Users, CheckCheck, Loader2, Code2 } from 'lucide-react';
+import { API_URL } from '../config';
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -14,11 +15,13 @@ export default function RoomPage() {
   const [outputOpen, setOutputOpen] = useState(false);
   const username = localStorage.getItem('username');
   const codeRef = useRef('');
+  const saveTimer = useRef(null);         // ← debounce timer
+  const isInitialLoad = useRef(true);     // ← skip first yjs sync (room load se aata hai)
 
   useEffect(() => {
     const fetchRoom = async () => {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/room/${roomId}`, {
+      const res = await fetch(`${API_URL}/room/${roomId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -29,6 +32,39 @@ export default function RoomPage() {
     };
     fetchRoom();
   }, [roomId]);
+
+  const handleCodeChange = (code) => {
+    codeRef.current = code;
+
+    // Pehli baar yjs room se existing code load karta hai — usse save mat karo
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
+
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_URL}/room/${roomId}/code`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ code }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          console.error('Save failed:', err);
+        } else {
+          console.log('Code saved ✓');
+        }
+      } catch (err) {
+        console.error('Network error while saving:', err);
+      }
+    }, 1500);
+  };
 
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId);
@@ -42,7 +78,7 @@ export default function RoomPage() {
     setOutputOpen(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/room/run', {
+      const res = await fetch('${API_URL}/room/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ code: codeRef.current, language }),
@@ -117,29 +153,50 @@ export default function RoomPage() {
           </div>
         </div>
 
-        {/* Center — Room ID copy */}
-        <button
-          className="copy-btn"
-          onClick={handleCopyRoomId}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '6px 14px', borderRadius: '8px', cursor: 'pointer',
+        {/* Center — Room ID copy + Password + Language */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            className="copy-btn"
+            onClick={handleCopyRoomId}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '6px 14px', borderRadius: '8px', cursor: 'pointer',
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              color: '#9CA3AF', fontSize: '11px', transition: 'all 0.15s',
+              fontFamily: 'inherit',
+            }}
+          >
+            {copied ? <CheckCheck size={12} color="#4ade80" /> : <Copy size={12} />}
+            <span style={{ color: copied ? '#4ade80' : '#E8E9F0' }}>
+              {copied ? 'Copied Room ID!' : 'Room ID: ' + roomId}
+            </span>
+          </button>
+
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '6px 14px', borderRadius: '8px',
             background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-            color: '#6B7280', fontSize: '11px', transition: 'all 0.15s',
-            fontFamily: 'inherit',
-          }}
-        >
-          {copied ? <CheckCheck size={12} color="#4ade80" /> : <Copy size={12} />}
-          <span style={{ color: copied ? '#4ade80' : '#9CA3AF' }}>
-            {copied ? 'Copied!' : roomId.slice(0, 8) + '···' + roomId.slice(-6)}
-          </span>
-          {!copied && <span style={{ color: '#374151', fontSize: '10px' }}>click to copy</span>}
-        </button>
+            color: '#E8E9F0', fontSize: '11px', fontFamily: 'inherit',
+          }}>
+            <span style={{ color: '#6B7280' }}>Language:</span>
+            <span style={{ fontWeight: '600', textTransform: 'capitalize' }}>{language}</span>
+          </div>
+
+          {room.owner === localStorage.getItem('userID') && room.displayPassword && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '6px 14px', borderRadius: '8px',
+              background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)',
+              color: '#818cf8', fontSize: '11px', fontFamily: 'inherit',
+            }}>
+              <span style={{ color: '#6B7280' }}>Password:</span>
+              <span style={{ fontWeight: '600', color: '#E8E9F0' }}>{room.displayPassword}</span>
+            </div>
+          )}
+        </div>
 
         {/* Right — Members + Run */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-
-          {/* Members */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: '6px',
             padding: '6px 12px', borderRadius: '8px',
@@ -150,7 +207,6 @@ export default function RoomPage() {
             <span>{room.members?.length || 1}</span>
           </div>
 
-          {/* Run button */}
           <button
             className="run-btn"
             onClick={handleRun}
@@ -177,17 +233,15 @@ export default function RoomPage() {
       {/* ── Editor + Output ── */}
       <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
 
-        {/* Editor */}
         <div style={{ flex: 1, overflow: 'hidden' }}>
           <CollaborativeEditor
             roomId={roomId}
             username={username}
             language={language}
-            onCodeChange={(code) => { codeRef.current = code; }}
+            onCodeChange={handleCodeChange}
           />
         </div>
 
-        {/* Output Panel */}
         {outputOpen && (
           <div style={{
             flexShrink: 0, height: '200px',
@@ -196,7 +250,6 @@ export default function RoomPage() {
             display: 'flex', flexDirection: 'column',
             animation: 'fadeIn 0.2s ease',
           }}>
-            {/* Output header */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '8px 16px',
@@ -216,7 +269,6 @@ export default function RoomPage() {
               </button>
             </div>
 
-            {/* Output content */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
               {running ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6B7280' }}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Users, Award, CheckCircle, Code, UserPlus, UserCheck } from 'lucide-react';
+import { API_URL } from '../config';
 
 export default function UserProfile({ onClose, ReceiverID }) {
   const [userProfile,  setUserProfile]  = useState(null);
@@ -14,7 +15,7 @@ export default function UserProfile({ onClose, ReceiverID }) {
       try {
         const token = localStorage.getItem('token');
         const id    = ReceiverID?._id || ReceiverID;
-        const res   = await fetch(`http://localhost:5000/users/profile/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res   = await fetch(`${API_URL}/users/profile/${id}`, { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) return;
         const data  = await res.json();
         setUserProfile1(data);
@@ -47,7 +48,7 @@ export default function UserProfile({ onClose, ReceiverID }) {
     try {
       const token = localStorage.getItem('token');
       const uid   = localStorage.getItem('userID');
-      await fetch('http://localhost:5000/users/request', {
+      await fetch('${API_URL}/users/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ UserID: uid, receiverID: ReceiverID?._id || ReceiverID }),
@@ -58,12 +59,9 @@ export default function UserProfile({ onClose, ReceiverID }) {
   };
 
   const stats = [
-    { icon: Code,        label: 'Problems Solved', value: userProfile?.problemsSolved ?? '—',      color: 'var(--info)',    bg: 'var(--accent-dim)',           border: 'var(--border-accent)' },
-    { icon: CheckCircle, label: 'Challenges',       value: userProfile?.challengesCompleted ?? '—', color: 'var(--success)', bg: 'rgba(74,222,128,0.10)',       border: 'rgba(74,222,128,0.20)' },
-    { icon: Users,       label: 'Friends',           value: userProfile?.friendsCount ?? '—',        color: '#a78bfa',        bg: 'rgba(167,139,250,0.10)',       border: 'rgba(167,139,250,0.20)' },
-    { icon: Award,       label: 'Success Rate',
-      value: userProfile?.problemsSolved ? `${Math.round((userProfile.challengesCompleted / userProfile.problemsSolved) * 100)}%` : '0%',
-      color: 'var(--warning)', bg: 'rgba(251,191,36,0.10)', border: 'rgba(251,191,36,0.20)' },
+    { icon: Code,        label: 'Problems Solved', value: userProfile?.problemsSolved ?? '—',      color: 'var(--info)',    bg: 'var(--accent-dim)',           border: 'var(--border-accent)', gridSpan: 'col-span-2 py-5 sm:py-6', textClass: 'text-3xl sm:text-4xl' },
+    { icon: CheckCircle, label: 'Challenges',       value: userProfile?.challengesCompleted ?? '—', color: 'var(--success)', bg: 'rgba(74,222,128,0.10)',       border: 'rgba(74,222,128,0.20)', textClass: 'text-xl sm:text-2xl font-bold' },
+    { icon: Users,       label: 'Friends',           value: userProfile?.friendsCount ?? '—',        color: '#a78bfa',        bg: 'rgba(167,139,250,0.10)',       border: 'rgba(167,139,250,0.20)', textClass: 'text-xl sm:text-2xl font-bold' },
   ];
 
   if (loading) return (
@@ -132,22 +130,22 @@ export default function UserProfile({ onClose, ReceiverID }) {
 
         {/* Stats */}
         <div className="p-5 sm:p-6">
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mb-5">
-            {stats.map(({ icon: Icon, label, value, color, bg, border }) => (
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mb-5 font-sans">
+            {stats.map(({ icon: Icon, label, value, color, bg, border, gridSpan = '', textClass = '' }) => (
               <div key={label}
-                className="p-3.5 sm:p-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+                className={`p-3.5 sm:p-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${gridSpan}`}
                 style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)';       e.currentTarget.style.borderColor = 'var(--border)'; }}
               >
                 <div className="flex items-center gap-2 mb-2.5">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center"
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0"
                     style={{ background: bg, border: `1px solid ${border}` }}>
                     <Icon size={13} style={{ color }} />
                   </div>
-                  <span className="text-xs" style={{ color: 'var(--fg-muted)' }}>{label}</span>
+                  <span className="text-xs sm:text-sm font-semibold" style={{ color: 'var(--fg-muted)' }}>{label}</span>
                 </div>
-                <p className="text-xl sm:text-2xl font-semibold tracking-tight" style={{ color: 'var(--fg)' }}>{value}</p>
+                <p className={`${textClass}`} style={{ color: 'var(--fg)' }}>{value}</p>
               </div>
             ))}
           </div>

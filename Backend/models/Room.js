@@ -18,6 +18,11 @@ const roomSchema = new mongoose.Schema(
       default: null,
     },
 
+    displayPassword: {
+      type: String,
+      default: null,
+    },
+
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

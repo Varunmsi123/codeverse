@@ -15,6 +15,7 @@ exports.createRoom = async (req, res) => {
       roomId,
       roomName,
       password: hashedPassword,
+      displayPassword: password,
       language,
       owner,
       members: [owner],
@@ -77,35 +78,70 @@ function getGlotLanguage(language) {
   return map[language] || map['javascript'];
 }
 
+const languageMap = {
+  javascript: 63,
+  python: 71,
+  java: 62,
+  cpp: 54,
+  c: 50,
+};
+
 exports.run = async (req, res) => {
-  const { code, language } = req.body;
-
-  if (!code || !language) {
-    return res.status(400).json({ output: "Code and language required" });
-  }
-
   try {
-    const { lang, filename } = getGlotLanguage(language);
+    const { code, language } = req.body;
+
+    if (!code || !language) {
+      return res.status(400).json({
+        success: false,
+        output: "Code and language are required",
+      });
+    }
+
+    const languageId = languageMap[language];
+
+    if (!languageId) {
+      return res.status(400).json({
+        success: false,
+        output: "Unsupported language",
+      });
+    }
 
     const response = await axios.post(
-      `https://glot.io/api/run/${lang}/latest`,
+      "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
       {
-        files: [{ name: filename, content: code }],
+        source_code: code,
+        language_id: languageId,
+        stdin: "",
       },
       {
         headers: {
-          'Authorization': `Token ${process.env.GLOT_API_TOKEN}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
 
-    const output = response.data.stdout || response.data.stderr || 'No output';
-    res.status(200).json({ output });
+    const result = response.data;
 
-  } catch (err) {
-    console.error("Execution error:", err.response?.data || err.message || err);
-    res.status(500).json({ output: "Execution failed" });
+    const output =
+      result.stdout ||
+      result.stderr ||
+      result.compile_output ||
+      result.message ||
+      result.status?.description ||
+      "No output";
+
+    return res.status(200).json({
+      success: true,
+      output,
+    });
+
+  } catch (error) {
+    console.error("Execution Error:", error.response?.data || error.message);
+
+    return res.status(500).json({
+      success: false,
+      output: "Failed to execute code",
+    });
   }
 };
 
@@ -145,6 +181,39 @@ exports.getMyRooms = async (req, res) => {
     return res.status(500).json({
       success: false,
       error: "Internal Server Error",
+    });
+  }
+};
+
+exports.updateCode = async (req, res) => {
+  try {
+    console.log("UPDATE CODE HIT");
+
+    const { roomId } = req.params;
+    const { code } = req.body;
+
+    console.log("roomId:", roomId);
+    console.log("code:", code);
+
+    const room = await Room.findOneAndUpdate(
+      { roomId },
+      { code },
+      { new: true }
+    );
+
+    console.log("Updated Room:", room);
+
+    res.status(200).json({
+      success: true,
+      message: "Code saved successfully",
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to save code",
     });
   }
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Search, Send, Trophy, Clock, ExternalLink, ShieldCheck } from 'lucide-react';
+import { API_URL } from "../config";
 
 export default function ChallengePage() {
   const [friends, setFriends] = useState([]);
@@ -20,10 +21,10 @@ export default function ChallengePage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [fr, pr, sr, rr] = await Promise.all([
-        fetch('http://localhost:5000/challenge/friends', { headers }),
-        fetch('http://localhost:5000/challenge/problems', { headers }),
-        fetch('http://localhost:5000/challenge/sent', { headers }),
-        fetch('http://localhost:5000/challenge/received', { headers }),
+        fetch(`${API_URL}/challenge/friends`, { headers }),
+        fetch(`${API_URL}/challenge/problems`, { headers }),
+        fetch(`${API_URL}/challenge/sent`, { headers }),
+        fetch(`${API_URL}/challenge/received`, { headers }),
       ]);
 
       const [fd, pd, sd, rd] = await Promise.all([fr.json(), pr.json(), sr.json(), rr.json()]);
@@ -42,7 +43,7 @@ export default function ChallengePage() {
     try {
       const token = localStorage.getItem('token');
       const challengeSlug = toSlug(name);
-      const response = await fetch('http://localhost:5000/challenge/submissions', {
+      const response = await fetch(`${API_URL}/challenge/submissions`, {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
       const s = await response.json();
@@ -52,7 +53,7 @@ export default function ChallengePage() {
       );
 
       if (solved) {
-        await fetch(`http://localhost:5000/challenge/updateStatus/${challengeId}`, {
+        await fetch(`${API_URL}/challenge/updateStatus/${challengeId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ status: 'solved' }),
@@ -68,7 +69,7 @@ export default function ChallengePage() {
     if (!selectedFriend || !selectedProblem) { alert('Please select a friend and a problem'); return; }
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/challenge/send', {
+      const response = await fetch(`${API_URL}/challenge/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ friendId: selectedFriend._id, problemId: selectedProblem.id, title: selectedProblem.title, difficulty: selectedProblem.difficulty }),

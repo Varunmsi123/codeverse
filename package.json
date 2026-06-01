@@ -22,6 +22,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "bootstrap": "^5.3.8",
     "codemirror": "^6.0.2",
+    "framer-motion": "^12.40.0",
     "lucide-react": "^0.555.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

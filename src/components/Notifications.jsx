@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, XCircle, Trophy, Users, Bell } from 'lucide-react';
+import { API_URL } from '../config';
 
 export default function Notifications({ onClose }) {
   const [notifications, setNotifications] = useState([]);
@@ -10,7 +11,7 @@ export default function Notifications({ onClose }) {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res   = await fetch('http://localhost:5000/users/notifications', { headers: { Authorization: `Bearer ${token}` } });
+      const res   = await fetch(`${API_URL}/users/notifications`, { headers: { Authorization: `Bearer ${token}` } });
       const data  = await res.json();
       if (data.success) setNotifications(data.notifications);
     } catch (e) { console.log('Notifications Error:', e); }
@@ -20,7 +21,7 @@ export default function Notifications({ onClose }) {
   const handleFriendRequest = async (notificationId, senderId, action) => {
     try {
       const token = localStorage.getItem('token');
-      const res   = await fetch('http://localhost:5000/friends/respond', {
+      const res   = await fetch(`${API_URL}/friends/respond`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ notificationId, senderId, action }),
       });
@@ -32,7 +33,7 @@ export default function Notifications({ onClose }) {
   const handleChallengeResponse = async (notificationId, challengeId, action) => {
     try {
       const token = localStorage.getItem('token');
-      const res   = await fetch('http://localhost:5000/challenge/respond', {
+      const res   = await fetch(`${API_URL}/challenge/respond`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ notificationId, challengeId, action }),
       });
@@ -44,7 +45,7 @@ export default function Notifications({ onClose }) {
   const dismissNotification = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:5000/notifications/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      await fetch(`${API_URL}/notifications/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       setNotifications(n => n.filter(x => x._id !== id));
     } catch (e) { console.log('Dismiss error:', e); }
   };

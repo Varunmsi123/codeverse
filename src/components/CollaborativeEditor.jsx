@@ -9,6 +9,7 @@ import { python } from '@codemirror/lang-python';
 import { java } from '@codemirror/lang-java';
 import { cpp } from '@codemirror/lang-cpp';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { API_URL } from '../config';
 
 const getLanguageExtension = (lang) => {
   switch (lang) {
@@ -30,7 +31,7 @@ export default function CollaborativeEditor({ roomId, username, language = 'java
     const ydoc = new Y.Doc();
 
     const provider = new WebsocketProvider(
-      'ws://localhost:5000/yjs',
+      `ws://${API_URL}/yjs`,
       roomId,
       ydoc
     );

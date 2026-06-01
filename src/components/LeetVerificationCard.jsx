@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, Copy, Check, ShieldCheck } from 'lucide-react';
+import { API_URL } from '../config';
 
 export default function LeetCodeVerification({ onClose, verificationCode, userId }) {
   const [leetcodeUsername, setLeetcodeUsername] = useState('');
@@ -20,7 +21,7 @@ export default function LeetCodeVerification({ onClose, verificationCode, userId
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res   = await fetch('http://localhost:5000/users/verifyleet', {
+      const res   = await fetch(`${API_URL}/users/verifyleet`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ userId, leetUsername: leetcodeUsername }),
