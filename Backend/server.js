@@ -21,11 +21,7 @@ const challengeRoutes = require("./routes/challengeRoutes");
 const roomRoutes = require("./routes/roomRoutes");
 
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-     "https://codeverse-rose.vercel.app",
-    "https://codeverse-d43shy430-varun-singhs-projects-5975b7a4.vercel.app"
-  ],
+  origin: true,
   credentials: true
 }));
 
