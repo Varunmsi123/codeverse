@@ -29,9 +29,10 @@ export default function CollaborativeEditor({ roomId, username, language = 'java
     if (!editorRef.current) return;
 
     const ydoc = new Y.Doc();
+    const wsUrl = API_URL.replace(/^https?:\/\//, 'wss://') + '/yjs';
 
     const provider = new WebsocketProvider(
-      `ws://${API_URL}/yjs`,
+      wsUrl,
       roomId,
       ydoc
     );
