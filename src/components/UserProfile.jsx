@@ -48,7 +48,7 @@ export default function UserProfile({ onClose, ReceiverID }) {
     try {
       const token = localStorage.getItem('token');
       const uid   = localStorage.getItem('userID');
-      await fetch('${API_URL}/users/request', {
+      await fetch(`${API_URL}/users/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ UserID: uid, receiverID: ReceiverID?._id || ReceiverID }),
