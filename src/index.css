@@ -1,19 +1,18 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
 
 @custom-variant dark (&:is([data-theme="dark"] *));
+
+
+
 @theme {
-  --font-product: 'Product', sans-serif;
+  --font-product: 'Space Grotesk', sans-serif;
   --font-playground: 'Playground', monospace;
   --color-clifford: #da373d;
 }
-@font-face {
-  font-family: 'Product';
-  src: url('./utility/Product.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
+
 
 @layer base {
   /* ── Light mode tokens ──────────────────────────────────────────── */
