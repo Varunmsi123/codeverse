@@ -83,7 +83,7 @@ export default function Room() {
     setRunning(true);
     setOutput('');
     try {
-      const res = await fetch('${API_URL}/room/run', {
+      const res = await fetch(`${API_URL}/room/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language }),
