@@ -8,8 +8,8 @@ router.post("/create", auth, createRoom);
 router.post("/join", auth, joinRoom);
 router.post("/run", auth, run);
 router.get("/my-rooms", auth, getMyRooms);
+router.put("/:roomId/code", auth, updateCode);
 router.get("/:roomId", auth, getRoom);
-router.put("/:roomId/code",updateCode);
 
 
 module.exports = router;

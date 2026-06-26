@@ -238,6 +238,7 @@ export default function RoomPage() {
             roomId={roomId}
             username={username}
             language={language}
+            initialCode={room.code}
             onCodeChange={handleCodeChange}
           />
         </div>

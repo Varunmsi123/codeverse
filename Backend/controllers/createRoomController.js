@@ -78,70 +78,46 @@ function getGlotLanguage(language) {
   return map[language] || map['javascript'];
 }
 
-const languageMap = {
-  javascript: 63,
-  python: 71,
-  java: 62,
-  cpp: 54,
-  c: 50,
-};
-
 exports.run = async (req, res) => {
+  const { code, language } = req.body;
+
+  if (!code || !language) {
+    return res.status(400).json({ success: false, output: "Code and language required" });
+  }
+
   try {
-    const { code, language } = req.body;
+    const getPistonLanguage = (lang) => {
+      const map = {
+        javascript: { language: 'javascript', version: '*', filename: 'main.js' },
+        python:     { language: 'python',     version: '*', filename: 'main.py' },
+        java:       { language: 'java',       version: '*', filename: 'Main.java' },
+        cpp:        { language: 'cpp',        version: '*', filename: 'main.cpp' },
+        c:          { language: 'c',          version: '*', filename: 'main.c' },
+      };
+      return map[lang] || map['javascript'];
+    };
 
-    if (!code || !language) {
-      return res.status(400).json({
-        success: false,
-        output: "Code and language are required",
-      });
-    }
+    const { language: pistonLang, version: pistonVer, filename } = getPistonLanguage(language);
 
-    const languageId = languageMap[language];
-
-    if (!languageId) {
-      return res.status(400).json({
-        success: false,
-        output: "Unsupported language",
-      });
-    }
-
-    const response = await axios.post(
-      "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
-      {
-        source_code: code,
-        language_id: languageId,
-        stdin: "",
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const result = response.data;
-
-    const output =
-      result.stdout ||
-      result.stderr ||
-      result.compile_output ||
-      result.message ||
-      result.status?.description ||
-      "No output";
-
-    return res.status(200).json({
-      success: true,
-      output,
+    console.log(`Executing code via Piston for: ${pistonLang}`);
+    const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
+      language: pistonLang,
+      version: pistonVer,
+      files: [
+        {
+          name: filename,
+          content: code
+        }
+      ]
     });
 
-  } catch (error) {
-    console.error("Execution Error:", error.response?.data || error.message);
+    const runResult = response.data.run;
+    const output = runResult.output || runResult.stdout || runResult.stderr || 'No output';
+    return res.status(200).json({ success: true, output });
 
-    return res.status(500).json({
-      success: false,
-      output: "Failed to execute code",
-    });
+  } catch (err) {
+    console.error("Piston execution error:", err.response?.data || err.message);
+    return res.status(500).json({ success: false, output: "Code execution failed. Verify connection to the execution engine." });
   }
 };
 

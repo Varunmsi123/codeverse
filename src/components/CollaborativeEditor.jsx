@@ -21,7 +21,7 @@ const getLanguageExtension = (lang) => {
   }
 };
 
-export default function CollaborativeEditor({ roomId, username, language = 'javascript', onCodeChange }) {
+export default function CollaborativeEditor({ roomId, username, language = 'javascript', initialCode, onCodeChange }) {
   const editorRef = useRef(null);
   const viewRef = useRef(null);
 
@@ -43,6 +43,11 @@ export default function CollaborativeEditor({ roomId, username, language = 'java
     });
 
     const ytext = ydoc.getText('codemirror');
+
+    // Populate with initialCode if ytext is empty
+    if (ytext.toString() === '' && initialCode) {
+      ytext.insert(0, initialCode);
+    }
 
     // Send code to parent whenever it changes
     ytext.observe(() => {
