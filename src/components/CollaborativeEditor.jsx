@@ -44,10 +44,12 @@ export default function CollaborativeEditor({ roomId, username, language = 'java
 
     const ytext = ydoc.getText('codemirror');
 
-    // Populate with initialCode if ytext is empty
-    if (ytext.toString() === '' && initialCode) {
-      ytext.insert(0, initialCode);
-    }
+    // Wait for the websocket connection to sync completely before loading from DB to prevent duplication
+    provider.on('sync', (isSynced) => {
+      if (isSynced && ytext.toString() === '' && initialCode) {
+        ytext.insert(0, initialCode);
+      }
+    });
 
     // Send code to parent whenever it changes
     ytext.observe(() => {
